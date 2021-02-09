@@ -3,8 +3,11 @@ require(hdi)
 require(Matrix)
 require(tictoc)
 require(doRNG)
+require(doSNOW)
+require(parallel)
+
 save <- TRUE
-nsim <- 10
+nsim <- 20
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -35,11 +38,13 @@ set.seed(42)
 
 tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
-             .packages = c("MASS", "Matrix",  "tictoc"), .options.snow = opts) %dorng%{
+             .packages = c("MASS", "Matrix", "hdi", "tictoc"), .options.snow = opts) %dorng%{
   x <- mvrnorm(n, rep(0,p), Cov)   
   x2 <- x[, 1:p2]
   y.true <- x%*%beta
   y <- y.true + 2 * rnorm(n)
+  
+  # low-dimensional
   xtx.inv <- solve(crossprod(x2))
   d <- diag(xtx.inv)
   gamma <- xtx.inv / d
@@ -60,7 +65,20 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   out <- list()
   out$low.dim <- list(beta.OLS = beta.OLS, beta.HOLS = beta.HOLS,
                       sd.scale = sd.scale, sigma.hat = sigma.hat)
-                             
+  
+  # high-dimensional
+  lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE)
+  beta.HOLS <- numeric(p)
+  sd.scale <- numeric(p)
+  for (j in 1:p){
+    z <- lp$Z[, j]
+    z3 <- as.vector(z^3)
+    beta.HOLS[j] <- (t(z3)%*%(y- x%*%lp$betahat))/(t(z3)%*%x[,j]) + lp$betahat[j]
+    sscale <- (z3/(t(z3)%*%x[,j])[1,1]-z/(t(z)%*%x[,j])[1,1])
+    sd.scale[j] <- sqrt(sum(sscale^2))
+  }
+  out$high.dim <- list(beta.OLS = lp$bhat, beta.HOLS = beta.HOLS,
+                      sd.scale = sd.scale, sigma.hat = lp$sigmahat)                           
   out                           
 }
 toc()
@@ -69,7 +87,10 @@ stopCluster(cl)
 res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                        rep("sd.scale", p2), "sigma.hat")
+res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
+colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
+                       rep("sd.scale", p), "sigma.hat")
 
-simulation <- list(low.dim = res.low, r.seed = attr(res, "rng") )
+simulation <- list(low.dim = res.low, high.dim = res.high, r.seed = attr(res, "rng") )
 resname <- paste0("results ", format(Sys.time(), "%d-%b-%Y %H.%M"))
 if (save) save(simulation, file = paste("results/", resname, ".RData", sep = ""))
