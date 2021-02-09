@@ -7,7 +7,7 @@ require(doSNOW)
 require(parallel)
 
 save <- TRUE
-nsim <- 20
+nsim <- 200
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
