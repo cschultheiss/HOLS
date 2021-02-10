@@ -5,8 +5,14 @@ require(tictoc)
 require(doRNG)
 require(doSNOW)
 require(parallel)
+require(MultiRNG)
+require(git2r)
+
+commit <- revparse_single(revision = "HEAD")
+print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
 
 save <- TRUE
+resname <- paste0("results ", format(Sys.time(), "%d-%b-%Y %H.%M"))
 nsim <- 200
 progress <- function(n, tag) {
   mod <- 16
@@ -38,8 +44,12 @@ set.seed(42)
 
 tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
-             .packages = c("MASS", "Matrix", "hdi", "tictoc"), .options.snow = opts) %dorng%{
-  x <- mvrnorm(n, rep(0,p), Cov)   
+             .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+  # Gaussian x
+  # x <- mvrnorm(n, rep(0,p), Cov)  
+  # uniform x
+  x <- draw.d.variate.uniform(n, p, Cov)
+  x <- sqrt(12) * (x - 0.5)
   x2 <- x[, 1:p2]
   y.true <- x%*%beta
   y <- y.true + 2 * rnorm(n)
@@ -91,6 +101,7 @@ res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
                        rep("sd.scale", p), "sigma.hat")
 
-simulation <- list(low.dim = res.low, high.dim = res.high, r.seed = attr(res, "rng") )
-resname <- paste0("results ", format(Sys.time(), "%d-%b-%Y %H.%M"))
+simulation <- list(low.dim = res.low, high.dim = res.high,
+                   r.seed = attr(res, "rng"), "commit" = commit)
+
 if (save) save(simulation, file = paste("results/", resname, ".RData", sep = ""))
