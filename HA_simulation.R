@@ -29,7 +29,7 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 100
+n <- 200
 p <- 200
 p2 <- 30
 rho <- 0.6
@@ -40,6 +40,7 @@ beta <- rep(0, p)
 beta[sel.index] <- 1
 alpha <- 2
 delta <- 1
+sigma <- 1
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
@@ -60,7 +61,7 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   x2 <- x[, 1:p2]
   y0 <- x%*%beta
   y.true <- y0 + alpha * H
-  y <- y.true + 2 * rnorm(n)
+  y <- y.true + sigma * rnorm(n)
   
   # low-dimensional
   xtx.inv <- solve(crossprod(x2))
