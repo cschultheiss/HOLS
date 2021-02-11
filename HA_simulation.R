@@ -29,7 +29,7 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 200
+n <- 100
 p <- 200
 p2 <- 30
 rho <- 0.6
@@ -55,12 +55,13 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # x <- draw.d.variate.uniform(n, p, Cov)
   # x <- sqrt(12) * (x - 0.5)
   
-  H <- runif(n, -sqrt(3), sqrt(3))
-  x[, 10] <- x[, 10] + delta * H
+  # H <- runif(n, -sqrt(3), sqrt(3))
+  # x[, 10] <- x[, 10] + delta * H
   
   x2 <- x[, 1:p2]
   y0 <- x%*%beta
-  y.true <- y0 + alpha * H
+  # y.true <- y0 + alpha * H
+  y.true <- y0 + x[, 10]^3
   y <- y.true + sigma * rnorm(n)
   
   # low-dimensional
