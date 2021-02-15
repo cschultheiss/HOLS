@@ -8,6 +8,8 @@ require(parallel)
 require(MultiRNG)
 require(git2r)
 
+source('HOLS_procedure.R')
+
 commit <- revparse_single(revision = "HEAD")
 print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
 
@@ -64,41 +66,13 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   y.true <- y0 + x[, 10]^3 -x[, 25]^3
   y <- y.true + sigma * rnorm(n)
   
-  # low-dimensional
-  xtx.inv <- solve(crossprod(x2))
-  d <- diag(xtx.inv)
-  gamma <- xtx.inv / d
-  z <- x2 %*% t(gamma)
-  beta.OLS <- numeric(p2)
-  beta.HOLS <- numeric(p2)
-  sd.scale <- numeric(p2)
-  for (j in 1:p2){
-    xtx.sub.inv <- xtx.inv[-j, -j] - tcrossprod(xtx.inv[-j, j])/d[j]
-    P_j <- diag(n) - x2[,-j] %*% xtx.sub.inv %*% t(x2[,-j])
-    wj <- P_j %*% y
-    zj <- as.vector(z[,j])
-    beta.OLS[j] <- crossprod(zj, wj) / norm(zj, "2")^2
-    beta.HOLS[j] <- crossprod(zj^3, wj) / norm(zj^2, "2")^2
-    sd.scale[j] <- sqrt((t(zj^3) %*% P_j %*% zj^3) / sum(zj^4)^2 - 1/sum(zj^2))
-  }
-  sigma.hat <- sqrt(sum((y - x2 %*% beta.OLS)^2) / (n - p2))
   out <- list()
-  out$low.dim <- list(beta.OLS = beta.OLS, beta.HOLS = beta.HOLS,
-                      sd.scale = sd.scale, sigma.hat = sigma.hat)
+  
+  # low-dimensional
+  out$low.dim <- HOLS.check(x2, y)
   
   # high-dimensional
-  lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE)
-  beta.HOLS <- numeric(p)
-  sd.scale <- numeric(p)
-  for (j in 1:p){
-    z <- lp$Z[, j]
-    z3 <- as.vector(z^3)
-    beta.HOLS[j] <- (t(z3)%*%(y- x%*%lp$betahat))/(t(z3)%*%x[,j]) + lp$betahat[j]
-    sscale <- (z3/(t(z3)%*%x[,j])[1,1]-z/(t(z)%*%x[,j])[1,1])
-    sd.scale[j] <- sqrt(sum(sscale^2))
-  }
-  out$high.dim <- list(beta.OLS = lp$bhat, beta.HOLS = beta.HOLS,
-                      sd.scale = sd.scale, sigma.hat = lp$sigmahat)                           
+  out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
   out                           
 }
 toc()
