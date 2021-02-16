@@ -35,9 +35,9 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
       beta.HOLS[j] <- crossprod(zj^3, wj) / norm(zj^2, "2")^2
       sd.scale[j] <- sqrt((t(zj^3) %*% P_j %*% zj^3) / sum(zj^4)^2 - 1/sum(zj^2))
     }
-    den <- n - p2
+    den <- n - p
     if (center) den <- den - 1
-    sigma.hat <- sqrt(sum((y - x2 %*% beta.OLS)^2) / (n - p2))
+    sigma.hat <- sqrt(sum((y - x %*% beta.OLS)^2) / den)
   }
   pval <- 2 * pnorm(abs(beta.OLS - beta.HOLS) / sd.scale / sigma.hat, lower.tail = FALSE)
   out <- list(beta.OLS = beta.OLS, beta.HOLS = beta.HOLS,

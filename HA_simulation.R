@@ -7,6 +7,7 @@ require(doSNOW)
 require(parallel)
 require(MultiRNG)
 require(git2r)
+require(expm)
 
 source('HOLS_procedure.R')
 
@@ -36,17 +37,18 @@ p <- 200
 p2 <- 30
 rho <- 0.6
 Cov <- toeplitz(rho^(seq(0, p - 1)))
+sqrt.Cov.H <- sqrtm(Cov[1:5,1:5])
 sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
 beta[sel.index] <- 1
-alpha <- 2
-delta <- 1
-sigma <- 1
+sigma <- 0.5
+d <- 5
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
-
+delta <- matrix(runif(d^2, -1, 1), d, d)
+alpha <- sample(c(-2, 2), d, TRUE)
 tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
              .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
@@ -56,14 +58,17 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # # uniform x
   # x <- draw.d.variate.uniform(n, p, Cov)
   # x <- sqrt(12) * (x - 0.5)
+  H <- matrix(0, n, d)
+  for (j in 1:d){
+    H[ ,j] <- runif(n, -sqrt(3), sqrt(3))
+  }
+  H <- H %*% sqrt.Cov.H
   
-  # H <- runif(n, -sqrt(3), sqrt(3))
-  # x[, 10] <- x[, 10] + delta * H
+  x[, ind] <- x[, ind] + H %*% delta
   
   x2 <- x[, 1:p2]
   y0 <- x%*%beta
-  # y.true <- y0 + alpha * H
-  y.true <- y0 + x[, 10]^3 -x[, 25]^3
+  y.true <- y0 + H %*% alpha
   y <- y.true + sigma * rnorm(n)
   
   out <- list()
@@ -80,10 +85,10 @@ stopCluster(cl)
 
 res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
-                       rep("sd.scale", p2), "sigma.hat")
+                       rep("sd.scale", p2), "sigma.hat", rep("pval", p2))
 res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
-                       rep("sd.scale", p), "sigma.hat")
+                       rep("sd.scale", p), "sigma.hat", rep("pval", p))
 
 simulation <- list(low.dim = res.low, high.dim = res.high,
                    r.seed = attr(res, "rng"), "commit" = commit)
