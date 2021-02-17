@@ -3,6 +3,8 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
   n <- dim(x)[1]
   p <- dim(x)[2]
   if (length(y) != n) stop("Dimensions do not match")
+  x <- scale(x, center = center, scale = standardize)
+  y <- scale(y, center = center, scale = standardize)
   if (p >= n && !use.Lasso) 
     stop("use.Lasso is set to FALSE, this is not okay for high-dimensional data")
   beta.OLS <- numeric(p)

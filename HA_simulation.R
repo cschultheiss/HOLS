@@ -1,3 +1,4 @@
+rm(list = ls(all = TRUE))
 require(MASS)
 require(hdi)
 require(Matrix)
@@ -32,7 +33,7 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 100
+n <- 200
 p <- 200
 p2 <- 30
 rho <- 0.6
