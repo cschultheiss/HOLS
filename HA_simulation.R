@@ -32,23 +32,21 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 200
+n <- 100
 p <- 200
 p2 <- 30
 rho <- 0.6
 Cov <- toeplitz(rho^(seq(0, p - 1)))
-sqrt.Cov.H <- sqrtm(Cov[1:5,1:5])
+Cov <- Cov * solve(Cov)[5,5]
 sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
 beta[sel.index] <- 1
 sigma <- 0.5
-d <- 5
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
-delta <- matrix(runif(d^2, -1, 1), d, d)
-alpha <- sample(c(-2, 2), d, TRUE)
+alpha <- 2
 tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
              .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
@@ -58,17 +56,13 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # # uniform x
   # x <- draw.d.variate.uniform(n, p, Cov)
   # x <- sqrt(12) * (x - 0.5)
-  H <- matrix(0, n, d)
-  for (j in 1:d){
-    H[ ,j] <- runif(n, -sqrt(3), sqrt(3))
-  }
-  H <- H %*% sqrt.Cov.H
+  H <- sample(c(-1, 1), n, TRUE)
   
-  x[, ind] <- x[, ind] + H %*% delta
+  x[, 5] <- x[, 5] + H
   
   x2 <- x[, 1:p2]
   y0 <- x%*%beta
-  y.true <- y0 + H %*% alpha
+  y.true <- y0 + alpha * H
   y <- y.true + sigma * rnorm(n)
   
   out <- list()
