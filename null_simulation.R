@@ -9,6 +9,8 @@ require(MultiRNG)
 require(git2r)
 require(expm)
 
+source('HOLS_procedure.R')
+
 commit <- revparse_single(revision = "HEAD")
 print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
 
