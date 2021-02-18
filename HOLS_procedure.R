@@ -1,5 +1,6 @@
 HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
                        standardize = FALSE, return.z = FALSE, return.w = FALSE, ...){
+  if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
   p <- dim(x)[2]
   if (length(y) != n) stop("Dimensions do not match")
