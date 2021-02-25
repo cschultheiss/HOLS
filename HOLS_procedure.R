@@ -53,5 +53,10 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
               pval = pval, pval.corr = pval.corr)
   if (return.z) out$z <- z
   if (return.w) out$w <- w
+  if (!use.Lasso) {
+    delta.beta <- beta.HOLS - beta.OLS
+    chisq.stat <- t(delta.beta) %*% solve(cov.z) %*% delta.beta / sigma.hat^2
+    out$pval.glob <- pchisq(chisq.stat, p, lower.tail = FALSE)
+  }
   return(out)
 }

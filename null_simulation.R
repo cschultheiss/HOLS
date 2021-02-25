@@ -78,7 +78,7 @@ stopCluster(cl)
 res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                        rep("sd.scale", p2), "sigma.hat",
-                       rep("pval", p2), rep("pval.corr", p2))
+                       rep("pval", p2), rep("pval.corr", p2), "pval.glob")
 res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
                         rep("sd.scale", p), "sigma.hat",
