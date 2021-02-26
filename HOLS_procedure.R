@@ -1,4 +1,4 @@
-HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
+HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
                        standardize = FALSE, return.z = FALSE, return.w = FALSE, ...){
   if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
@@ -44,9 +44,10 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
   cov.z <- crossprod(var.scale)
   sd.scale <- sqrt(diag(cov.z))
   pval <- 2 * pnorm(abs(beta.OLS - beta.HOLS) / sd.scale / sigma.hat, lower.tail = FALSE)
-  zz <- mvrnorm(10000, rep(0, ncol(cov.z)), cov.z)
-  zz2 <- scale(zz, center = FALSE, scale = sqrt(diag(cov.z)))
-  Gz <- apply(2 * pnorm(abs(zz2), lower.tail = FALSE), 1, min)
+  eps <- mvrnorm(10000, rep(0, n), diag(n))
+  eps.z <- eps %*% var.scale
+  eps.z.scaled <- scale(eps.z, FALSE, sd.scale)
+  Gz <- apply(2 * pnorm(abs(eps.z.scaled), lower.tail = FALSE), 1, min)
   pval.corr <- ecdf(Gz)(pval)
   out <- list(beta.OLS = beta.OLS, beta.HOLS = beta.HOLS,
               sd.scale = sd.scale, sigma.hat = sigma.hat,
@@ -57,6 +58,21 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, center = FALSE,
     delta.beta <- beta.HOLS - beta.OLS
     chisq.stat <- t(delta.beta) %*% solve(cov.z) %*% delta.beta / sigma.hat^2
     out$pval.glob <- pchisq(chisq.stat, p, lower.tail = FALSE)
+    if (simulated.pval){
+      P.dbeta <- var.scale %*% solve(cov.z) %*% t(var.scale)
+      P.sigma <- diag(n) - x %*% xtx.inv %*% t(x)
+      sigma.null <- apply((eps %*% P.sigma)^2, 1, sum)
+      out$pval.sim <- apply(t(abs(eps.z) / sqrt(sigma.null / den)) > 
+                              abs(delta.beta) / sigma.hat, 1, mean)
+      max.matrix <- matrix(rep(apply(abs(eps.z.scaled), 1, max)/sqrt(sigma.null/den),
+                               each=p), nrow=p)
+      out$pval.corr.sim <- apply(max.matrix > abs(delta.beta) / sigma.hat / sd.scale, 1, mean)
+      chi.null <- apply((eps %*% P.dbeta)^2, 1, sum)
+      frac.null <- chi.null / sigma.null * den
+      out$pval.glob.sim <- 1 - ecdf(frac.null)(chisq.stat)
+
+    }
+    
   }
   return(out)
 }
