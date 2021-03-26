@@ -33,8 +33,8 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 200
-p <- 200
+n <- 500
+p <- 30
 p2 <- 30
 rho <- 0.6
 Cov <- toeplitz(rho^(seq(0, p - 1)))
@@ -43,7 +43,7 @@ sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
 beta[sel.index] <- 1
-sigma <- 0.5
+sigma <- 1
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
@@ -54,10 +54,7 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # Gaussian x
   x <- mvrnorm(n, rep(0,p), Cov)
   
-  # # uniform x
-  # x <- draw.d.variate.uniform(n, p, Cov)
-  # x <- sqrt(12) * (x - 0.5)
-  H <- sample(c(-1, 1), n, TRUE)
+  H <- rt(n, 7) / sqrt(1.4)
   
   x[, 5] <- x[, 5] + H
   
@@ -72,7 +69,7 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   out$low.dim <- HOLS.check(x2, y)
   
   # high-dimensional
-  out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
+  # out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
   out                           
 }
 toc()
@@ -81,13 +78,15 @@ stopCluster(cl)
 res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                        rep("sd.scale", p2), "sigma.hat",
-                       rep("pval", p2), rep("pval.corr", p2))
-res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
-colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
-                        rep("sd.scale", p), "sigma.hat",
-                        rep("pval", p), rep("pval.corr", p))
+                       rep("pval", p2), rep("pval.corr", p2),
+                       "pval.glob", rep("pval.sim", p2),
+                       rep("pval.corr.sim", p2), "pval.glob.sim")
+# res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
+# colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
+#                         rep("sd.scale", p), "sigma.hat",
+#                         rep("pval", p), rep("pval.corr", p))
 
-simulation <- list(low.dim = res.low, high.dim = res.high,
+simulation <- list(low.dim = res.low, # high.dim = res.high,
                    r.seed = attr(res, "rng"), "commit" = commit)
 
 if (save) save(simulation, file = paste("results/", resname, ".RData", sep = ""))
