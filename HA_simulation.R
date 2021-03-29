@@ -11,6 +11,7 @@ require(git2r)
 require(expm)
 
 source('HOLS_procedure.R')
+source('simulation_analysis.R')
 
 commit <- revparse_single(revision = "HEAD")
 print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
@@ -35,14 +36,14 @@ registerDoSNOW(cl)
 
 n <- 1000
 p <- 30
-p2 <- 30
+p2 <- 1
 rho <- 0.6
 Cov <- toeplitz(rho^(seq(0, p - 1)))
 Cov <- Cov * solve(Cov)[5,5]
 sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
-beta[sel.index] <- 1
+# beta[sel.index] <- 1
 sigma <- 0.5
 
 RNGkind("L'Ecuyer-CMRG")
@@ -56,7 +57,7 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   
   H <- rt(n, 7) / sqrt(1.4)
   
-  x[, 5] <- x[, 5] + H
+  x[, 1] <- x[, 1] + H
   
   x2 <- x[, 1:p2]
   y0 <- x%*%beta
@@ -90,3 +91,5 @@ simulation <- list(low.dim = res.low, # high.dim = res.high,
                    r.seed = attr(res, "rng"), "commit" = commit)
 
 if (save) save(simulation, file = paste("results/", resname, ".RData", sep = ""))
+
+simulation.summary(simulation)

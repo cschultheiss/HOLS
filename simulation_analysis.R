@@ -3,6 +3,7 @@ simulation.summary <- function(simulation, alpha = 0.05, variables = NULL) {
   
   if (!is.null(simulation$low.dim)) {
     cols <- colnames(simulation$low.dim)
+    nsim <- dim(simulation$low.dim)[1]
     with.pval <- "pval" %in% cols
     with.corr <- "pval.corr" %in% cols
     with.sumstat <- "pval.glob" %in% cols
@@ -22,6 +23,8 @@ simulation.summary <- function(simulation, alpha = 0.05, variables = NULL) {
       }
       pval.corr <- pval * dim(pval)[2]
     }
+    
+    if (!is.matrix(pval.corr)) pval.corr <- matrix(pval.corr, nrow = nsim)
     min.pval.corr <- apply(pval.corr, 1, min)
     ls$low.dim$min.rej <- mean(min.pval.corr < alpha)
     if (with.sumstat) ls$low.dim$sum.rej <- mean(simulation$low.dim[, "pval.glob"] < alpha)
@@ -36,6 +39,7 @@ simulation.summary <- function(simulation, alpha = 0.05, variables = NULL) {
       pval.corr.sim <- simulation$low.dim[ ,which(colnames(simulation$low.dim) == "pval.corr.sim")]
       pval.sim <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.sim")]
 
+      if (!is.matrix(pval.corr.sim)) pval.corr.sim <- matrix(pval.corr.sim, nrow = nsim)
       min.pval.corr.sim <- apply(pval.corr.sim, 1, min)
       ls$low.dim$simulated$min.rej <- mean(min.pval.corr.sim < alpha)
       if (with.simulated.sumstat) ls$low.dim$simulated$sum.rej <- mean(simulation$low.dim[, "pval.glob.sim"] < alpha)
