@@ -6,3 +6,4 @@ HOLS.Rproj
 results
 *.Rout
 nohup.out
+.sync.ffs_db
