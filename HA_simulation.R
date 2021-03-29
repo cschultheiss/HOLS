@@ -43,7 +43,7 @@ sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
 beta[sel.index] <- 1
-sigma <- 0.5
+sigma <- 0
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
