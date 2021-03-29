@@ -32,7 +32,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
     gamma <- xtx.inv / d
     z <- x %*% t(gamma)
     for (j in 1:p){
-      # formula for (x_{-j}^\top x_{-j})^{-1} using (x^/top x)^{-1}
+      # formula for solve(crossprod(x_{-j})) using solve(crossprod(x))
       xtx.sub.inv <- xtx.inv[-j, -j] - tcrossprod(xtx.inv[-j, j])/d[j]
       P_j <- diag(n) - x[,-j] %*% xtx.sub.inv %*% t(x[,-j])
       w[,j] <- wj <- P_j %*% y

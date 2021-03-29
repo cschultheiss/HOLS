@@ -1,39 +1,79 @@
-simulation.summary <- function(simulation, variables = NULL, with.pval = TRUE, with.corr = TRUE){
-  if (with.corr){
-    pval.corr <- simulation$low.dim[,122:151]
-    pval.corr.h <- simulation$high.dim[,802:1001]
-  } else {
-    if (with.pval){
-      pval <- simulation$low.dim[,92:121]
-      pval.h <- simulation$high.dim[,602:801] 
+simulation.summary <- function(simulation, alpha = 0.05, variables = NULL) {
+  ls <- list()
+  
+  if (!is.null(simulation$low.dim)) {
+    cols <- colnames(simulation$low.dim)
+    with.pval <- "pval" %in% cols
+    with.corr <- "pval.corr" %in% cols
+    with.sumstat <- "pval.glob" %in% cols
+    with.simulated.pval <- "pval.corr.sim" %in% cols
+    with.simulated.sumstat <- "pval.glob.sim" %in% cols
+    ls$low.dim <- list()
+    if (with.corr){
+      pval.corr <- simulation$low.dim[ ,which(colnames(simulation$low.dim) == "pval.corr")]
     } else {
-      pval <- 2 * pnorm(abs(simulation$low.dim[,1:30]-simulation$low.dim[,31:60]) /
-                          simulation$low.dim[,61:90]/simulation$low.dim[,91], lower.tail = FALSE)
-      pval.h <- 2 * pnorm(abs(simulation$high.dim[,1:200]-simulation$high.dim[,201:400]) /
-                          simulation$high.dim[,401:600]/simulation$high.dim[,601], lower.tail = FALSE)
+      if (with.pval){
+        pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
+      } else {
+        pval <- 2 * pnorm(abs(simulation$low.dim[, which(colnames(simulation$low.dim) == "beta.OLS")] - 
+                                simulation$low.dim[, which(colnames(simulation$low.dim) == "beta.HOLS")]) /
+                            simulation$low.dim[, which(colnames(simulation$low.dim) == "sd.scale")] /
+                            simulation$low.dim[,"sigma.hat"], lower.tail = FALSE)
+      }
+      pval.corr <- pval * dim(pval)[2]
     }
-    pval.corr <- pval * 30
-    pval.corr.h <- pval.h * 200
+    min.pval.corr <- apply(pval.corr, 1, min)
+    ls$low.dim$min.rej <- mean(min.pval.corr < alpha)
+    if (with.sumstat) ls$low.dim$sum.rej <- mean(simulation$low.dim[, "pval.glob"] < alpha)
+    if (!is.null(variables)) {
+      ls$low.dim$variables.rej <- apply(as.matrix(pval.corr[ ,variables], nrow = dim(pval.corr)[1]) < alpha, 2, mean)
+      min.pval.corr.others <- apply(pval.corr[,-variables], 1, min)
+      ls$low.dim$others.rej <- mean(min.pval.corr.others < alpha)
+    }
+    
+    if (with.simulated.pval) {
+      ls$low.dim$simulated <- list()
+      pval.corr.sim <- simulation$low.dim[ ,which(colnames(simulation$low.dim) == "pval.corr.sim")]
+      pval.sim <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.sim")]
+
+      min.pval.corr.sim <- apply(pval.corr.sim, 1, min)
+      ls$low.dim$simulated$min.rej <- mean(min.pval.corr.sim < alpha)
+      if (with.simulated.sumstat) ls$low.dim$simulated$sum.rej <- mean(simulation$low.dim[, "pval.glob.sim"] < alpha)
+      if (!is.null(variables)) {
+        ls$low.dim$simulated$variables.rej <- apply(as.matrix(pval.corr.sim[ ,variables], nrow = dim(pval.corr.sim)[1]) < alpha, 2, mean)
+        min.pval.corr.sim.others <- apply(pval.corr.sim[,-variables], 1, min)
+        ls$low.dim$simulated$others.rej <- mean(min.pval.corr.sim.others < alpha)
+      }
+    }
   }
   
-  min.pval.corr <- apply(pval.corr, 1, min)
-  global.rej <- mean(min.pval.corr < 0.05)
-  min.pval.corr.h <- apply(pval.corr.h, 1, min)
-  global.rej.h <- mean(min.pval.corr.h < 0.05)
-  if (!is.null(variables)){
-    variables.rej <- apply(as.matrix(pval.corr[ ,variables], nrow = dim(pval.corr)[1]) < 0.05, 2, mean)
-    variables.rej.h <- apply(as.matrix(pval.corr.h[ ,variables], nrow = dim(pval.corr.h)[1]) < 0.05, 2, mean)
-    min.pval.corr.others <- apply(pval.corr[,-variables], 1, min)
-    others.rej <- mean(min.pval.corr.others < 0.05)
-    min.pval.corr.others.h <- apply(pval.corr.h[,-variables], 1, min)
-    others.rej.h <- mean(min.pval.corr.others.h < 0.05)
-  } else{
-    variables.rej <- NULL
-    variables.rej.h <- NULL
-    others.rej <- NULL
-    others.rej.h <- NULL
+  if (!is.null(simulation$high.dim)) {
+    cols.h <- colnames(simulation$high.dim)
+    with.pval <- "pval" %in% cols.h
+    with.corr <- "pval.corr" %in% cols.h
+    ls$high.dim <- list()
+    if (with.corr){
+      pval.corr.h <- simulation$high.dim[ ,which(colnames(simulation$high.dim) == "pval.corr")]
+    } else {
+      if (with.pval){
+        pval.h <- simulation$high.dim[,which(colnames(simulation$high.dim) == "pval")] 
+      } else {
+        pval.h <- 2 * pnorm(abs(simulation$high.dim[, which(colnames(simulation$high.dim) == "beta.OLS")] - 
+                                  simulation$high.dim[, which(colnames(simulation$high.dim) == "beta.HOLS")]) /
+                              simulation$high.dim[, which(colnames(simulation$high.dim) == "sd.scale")] /
+                              simulation$high.dim[,"sigma.hat"], lower.tail = FALSE)
+      }
+      pval.corr.h <- pval.h * dim(pval.h)[2]
+    }
+    
+    min.pval.corr.h <- apply(pval.corr.h, 1, min)
+    ls$high.dim$min.rej <- mean(min.pval.corr.h < alpha)
+    if (!is.null(variables)) {
+      ls$high.dim$variables.rej <- apply(as.matrix(pval.corr.h[ ,variables], nrow = dim(pval.corr.h)[1]) < alpha, 2, mean)
+      min.pval.corr.others.h <- apply(pval.corr.h[,-variables], 1, min)
+      ls$high.dim$others.rej <- mean(min.pval.corr.others.h < alpha)
+    }
   }
-  return(list(global.rej = global.rej, variables.rej = variables.rej,
-              others.rej= others.rej, global.rej.h = global.rej.h,
-              variables.rej.h = variables.rej.h, others.rej.h = others.rej.h))
+
+  return(ls)
 }
