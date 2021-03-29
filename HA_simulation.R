@@ -33,7 +33,7 @@ cl<-makeSOCKcluster(16)
 
 registerDoSNOW(cl)
 
-n <- 500
+n <- 1000
 p <- 30
 p2 <- 30
 rho <- 0.6
@@ -43,7 +43,7 @@ sel.index <- c(1, 5, 10, 15, 20)
 ind <- sel.index
 beta <- rep(0, p)
 beta[sel.index] <- 1
-sigma <- 0
+sigma <- 0.5
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
