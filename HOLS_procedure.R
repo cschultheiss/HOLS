@@ -1,37 +1,47 @@
+require(hdi)
+require(MASS)
+
 HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
-                       standardize = FALSE, multiplecorr.method = "sim", return.z = FALSE, return.w = FALSE, ...){
+                       standardize = FALSE, multiplecorr.method = "sim", lasso.proj.out = NULL,
+                       return.z = FALSE, return.w = FALSE, verb = FALSE, ...){
+  
   if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
   p <- dim(x)[2]
   if (length(y) != n) stop("Dimensions do not match")
+  
   x <- scale(x, center = center, scale = standardize)
   y <- scale(y, center = center, scale = standardize)
   if (p >= n && !use.Lasso) 
     stop("use.Lasso is set to FALSE, this is not okay for high-dimensional data")
+  
   beta.OLS <- numeric(p)
   beta.HOLS <- numeric(p)
   var.scale <- matrix(NA, n, p)
   w <- matrix(NA, nrow = n, ncol = p)
   if (use.Lasso) {
+    simulated.pval <- FALSE # cannot do that for high-dimensional data
     # make use of the desparsified Lasso
-    lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, ...)
-    beta.OLS <- lp$bhat
-    z <- lp$Z
-    for (j in 1:p){
+    if (is.null(lasso.proj.out)) lasso.proj.out <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, ...)
+    beta.OLS <- lasso.proj.out$bhat
+    z <- lasso.proj.out$Z
+    for (j in 1:p) {
+      if (verb) cat("Checking variable", j, "\n")
       zj <- as.vector(z[, j])
-      w[,j] <- wj <- y- x[, -j] %*% lp$betahat[-j]
+      w[,j] <- wj <- y- x[, -j] %*% lasso.proj.out$betahat[-j]
       # beta^{HOLS}_j according to definition
       beta.HOLS[j] <- crossprod(zj^3, wj)/(crossprod(zj^3, x[,j]))
       # ||var.scale[,j]||^2 is the scale for j s variance
       var.scale[,j] <- (zj^3/(crossprod(zj^3, x[,j]))[1,1]-zj/(crossprod(zj, x[,j]))[1,1])
     }
-    sigma.hat <- lp$sigmahat
+    sigma.hat <- lasso.proj.out$sigmahat
   } else {
     xtx.inv <- solve(crossprod(x))
     d <- diag(xtx.inv)
     gamma <- xtx.inv / d
     z <- x %*% t(gamma)
     for (j in 1:p){
+      if (verb) cat("Checking variable", j, "\n")
       # formula for solve(crossprod(x_{-j})) using solve(crossprod(x))
       xtx.sub.inv <- xtx.inv[-j, -j] - tcrossprod(xtx.inv[-j, j])/d[j]
       P_j <- diag(n) - x[,-j] %*% xtx.sub.inv %*% t(x[,-j])
