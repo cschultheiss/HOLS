@@ -2,7 +2,7 @@ require(hdi)
 require(MASS)
 
 HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
-                       standardize = FALSE, multiplecorr.method = "sim", lasso.proj.out = NULL,
+                       standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
                        return.z = FALSE, return.w = FALSE, verb = FALSE, ...){
   
   if (is.vector(x)) x <- matrix(x, ncol = 1)
@@ -66,22 +66,26 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
   sd.scale <- sqrt(diag(cov.z))
   pval <- 2 * pnorm(abs(beta.OLS - beta.HOLS) / sd.scale / sigma.hat, lower.tail = FALSE)
   if (simulated.pval || multiplecorr.method == "sim") {
-    # repetitions of n-dimensional random error
-    eps <- mvrnorm(10000, rep(0, n), diag(n))
-    # how error affects each direction
-    eps.z <- eps %*% var.scale
+    if (simulated.pval || p > n) {
+      # repetitions of n-dimensional random error
+      eps <- matrix(rnorm(n * nsim), nrow = nsim, ncol = n)
+      # how error affects each direction
+      eps.z <- eps %*% var.scale
+    } else {
+      # if we only need this direction, save resources
+      eps.z <- mvrnorm(nsim, rep(0, p), cov.z)
+    }
+  }
+  if (multiplecorr.method == "sim") {
     # normalized to have unit variance
     eps.z.scaled <- scale(eps.z, FALSE, sd.scale)
     # null distribution of minimum p-value
     Gz <- apply(2 * pnorm(abs(eps.z.scaled), lower.tail = FALSE), 1, min)
-  }
-  if (multiplecorr.method == "sim") {
     # compare p-value to empirical minimum of p-values under the global null
     pval.corr <- ecdf(Gz)(pval)
   } else {
     pval.corr <- p.adjust(pval, method = multiplecorr.method)
   }
-  
   out <- list(beta.OLS = beta.OLS, beta.HOLS = beta.HOLS,
               sd.scale = sd.scale, sigma.hat = sigma.hat,
               pval = pval, pval.corr = pval.corr)
@@ -101,10 +105,10 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
       # from the global null for least squares regression
       # for the desparsified Lasso, this is not applicable. We rely on our approximate tests.
 
-      P.sigma <- diag(n) - x %*% xtx.inv %*% t(x)
+      P.sigma <- function(eps) eps - x %*% (xtx.inv %*% (t(x) %*% eps))
       # under the global null, error estimate for given eps is sqrt(||P.sigma %*% eps||^2/(n-p))
       # under the global null beta_^{HOlS} - beta_^{HOlS} for given eps is t(var.scale) %*% eps (stored in eps.z)
-      sigma2.null <- apply((eps %*% P.sigma)^2, 1, sum)
+      sigma2.null <- apply((P.sigma(t(eps)))^2, 2, sum)
       out$pval.sim <- apply(t(abs(eps.z) / sqrt(sigma2.null / den)) > 
                               abs(delta.beta) / sigma.hat, 1, mean)
       if (multiplecorr.method == "sim"){
@@ -117,8 +121,9 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
       }
       # under the global null chisq.stat is distributed as
       # t(delta.beta) %*% solve(cov.z) %*% delta.beta = t(eps) %*% var.scale solve(cov.z) %*% t(var.scale) %*% eps
-      P.dbeta <- var.scale %*% solve(cov.z) %*% t(var.scale)
-      chi.null <- apply((eps %*% P.dbeta)^2, 1, sum)
+      # P.dbeta <- var.scale %*% solve(cov.z) %*% t(var.scale)¨
+      P.dbeta <- function(eps) var.scale %*% (solve(cov.z) %*% (t(var.scale) %*% eps))
+      chi.null <- apply((P.dbeta(t(eps)))^2, 2, sum)
       frac.null <- chi.null / (sigma2.null / den)
       out$pval.glob.sim <- 1 - ecdf(frac.null)(chisq.stat)
     }
