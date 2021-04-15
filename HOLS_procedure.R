@@ -44,15 +44,18 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
       if (verb) cat("Checking variable", j, "\n")
       # formula for solve(crossprod(x_{-j})) using solve(crossprod(x))
       xtx.sub.inv <- xtx.inv[-j, -j] - tcrossprod(xtx.inv[-j, j])/d[j]
-      P_j <- diag(n) - x[,-j] %*% xtx.sub.inv %*% t(x[,-j])
-      w[,j] <- wj <- P_j %*% y
+      xtx.sub.inv.tx <- xtx.sub.inv %*% t(x[,-j])
+      P_j <- function(y) y - x[,-j] %*% (xtx.sub.inv.tx%*%y) 
+      # P_j <- diag(n) - x[,-j] %*% xtx.sub.inv %*% t(x[,-j])
+
+      w[,j] <- wj <- P_j(y)
       zj <- as.vector(z[,j])
       # beta^{HOLS}_j according to definition
       beta.OLS[j] <- crossprod(zj, wj) / norm(zj, "2")^2
       # beta^{OLS}_j according to definition
       beta.HOLS[j] <- crossprod(zj^3, wj) / norm(zj^2, "2")^2
       # ||var.scale[,j]||^2 is the scale for j s variance
-      var.scale[,j] <- P_j %*% (zj^3 / sum(zj^4) -zj / sum(zj^2))
+      var.scale[,j] <- P_j(zj^3 / sum(zj^4) -zj / sum(zj^2))
     }
     den <- n - p
     # reduce degrees of freedom, if an intercept was used
@@ -112,7 +115,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
       } else {
         out$pval.corr.sim <- p.adjust(out$pval.sim, method = multiplecorr.method)
       }
-      # under the global null chisq.stat is distributed as frac.null as 
+      # under the global null chisq.stat is distributed as
       # t(delta.beta) %*% solve(cov.z) %*% delta.beta = t(eps) %*% var.scale solve(cov.z) %*% t(var.scale) %*% eps
       P.dbeta <- var.scale %*% solve(cov.z) %*% t(var.scale)
       chi.null <- apply((eps %*% P.dbeta)^2, 1, sum)
