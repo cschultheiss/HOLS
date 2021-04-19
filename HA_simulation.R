@@ -37,7 +37,7 @@ progress <- function(n, tag) {
 }
 
 
-n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
+n.vec <- 1e7 # c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
 p <- 7
 p2 <- 7
 # rho <- 0.6
