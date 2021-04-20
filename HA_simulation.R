@@ -37,7 +37,7 @@ progress <- function(n, tag) {
 }
 
 
-n.vec <- 1e7 # c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
+n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
 p <- 7
 p2 <- 7
 # rho <- 0.6
@@ -47,7 +47,7 @@ p2 <- 7
 # ind <- sel.index
 beta <- rep(0, p)
 # beta[sel.index] <- 1
-sigma <- 1
+sigma <- 2
 alpha <- sqrt(2.5)
 
 RNGkind("L'Ecuyer-CMRG")
@@ -72,13 +72,13 @@ for (n in n.vec) {
     
     x <- eval(parse(text =paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
     
-    H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
-    
-    x[, 3] <- x[, 3] + H
+    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
+    # 
+    # x[, 3] <- x[, 3] + H
     
     x.sub <- x[, 1:p2]
     y0 <- x%*%beta
-    y.true <- y0 + alpha * H
+    y.true <- y0 + x[, 4]^3
     y <- y.true + sigma * rnorm(n)
     
     out <- list()
@@ -111,6 +111,6 @@ for (n in n.vec) {
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(simulation.summary(simulation, variables = c(2, 3, 4)))
+  print(simulation.summary(simulation, variables = c(1, 2, 3, 4)))
 }
 
