@@ -36,6 +36,7 @@ progress <- function(n, tag) {
   }
 }
 
+opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
 p <- 7
@@ -52,12 +53,16 @@ alpha <- sqrt(2.5)
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
+seed.vec <- sample(1:10000, length(n.vec))
+print(seed.vec) # 3588 3052 2252 5257 8307
+seed.n <- 0
 
 
 for (n in n.vec) {
-  opts <- list(progress = progress)
-  cl<-makeSOCKcluster(16) 
+  seed.n <- seed.n + 1
+  set.seed(seed.vec[seed.n])
   
+  cl<-makeSOCKcluster(16) 
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
