@@ -65,7 +65,7 @@ for (n in n.vec) {
     x1 <- rt(n, df = 7) / sqrt(1.4)
     x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     x3 <- rt(n, df = 7) / sqrt(1.4)
-    x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * rnorm(n)
+    x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
     x5 <- rt(n, df = 7) / sqrt(1.4)
     x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
     x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
