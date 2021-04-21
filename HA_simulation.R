@@ -39,8 +39,8 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
-p <- 1
-p2 <- 1
+p <- 2
+p2 <- 2
 # rho <- 0.6
 # Cov <- toeplitz(rho^(seq(0, p - 1)))
 # Cov <- Cov * solve(Cov)[5,5]
@@ -81,11 +81,13 @@ for (n in n.vec) {
     # 
     # x[, 3] <- x[, 3] + H
                  
-    x <- matrix(rnorm(n), n)
+    x1 <- rt(n, df = 7) / sqrt(1.4)
+    x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
+    x <- eval(parse(text =paste("cbind(", paste("x", 1:2, sep="", collapse = ","), ")")))
     
     x.sub <- x[, 1:p2]
     y0 <- x%*%beta
-    y.true <- y0 + x[, 1]^2 - 1 
+    y.true <- y0 + x[, 2]^2 - 1 
     y <- y.true + sigma * rnorm(n)
     
     out <- list()
