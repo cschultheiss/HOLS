@@ -81,7 +81,7 @@ for (n in n.vec) {
     # 
     # x[, 3] <- x[, 3] + H
                  
-    x1 <- rt(n, df = 7) / sqrt(1.4)
+    x1 <- runif(n, -sqrt(3), sqrt(3))
     x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     x <- eval(parse(text =paste("cbind(", paste("x", 1:2, sep="", collapse = ","), ")")))
     
