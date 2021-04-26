@@ -87,7 +87,7 @@ for (n in n.vec) {
     
     x.sub <- x[, 1:p2]
     y0 <- x%*%beta
-    y.true <- y0 + x[, 2]^2 - 1 
+    y.true <- y0 + abs(x[, 2]) - 3.9753 / sqrt(24)
     y <- y.true + sigma * rnorm(n)
     
     out <- list()
