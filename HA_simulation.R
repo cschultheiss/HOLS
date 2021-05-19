@@ -40,7 +40,7 @@ opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
 p <- 7
-p2 <- 7
+p2 <- 6
 # rho <- 0.6
 # Cov <- toeplitz(rho^(seq(0, p - 1)))
 # Cov <- Cov * solve(Cov)[5,5]
@@ -70,8 +70,8 @@ for (n in n.vec) {
     x1 <- rt(n, df = 7) / sqrt(1.4)
     x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     x3 <- rt(n, df = 7) / sqrt(1.4)
-    H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
-    x3 <- sqrt(0.5) * (x3 + H)
+    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE) 
+    # x3 <- sqrt(0.5) * (x3 + H)
     x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
     x5 <- rt(n, df = 7) / sqrt(1.4)
     x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
@@ -79,15 +79,16 @@ for (n in n.vec) {
 
     x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
     
-    x.sub <- x[, 1:p2]
-    y0 <- x%*%beta
-    y.true <- y0 + alpha * H
+    x.sub <- x[, 1:p]
+    # y0 <- x%*%beta
+    # y.true <- y0 + alpha * H
+    y.true <- alpha * x3
     y <- y.true + rnorm(n, sd = sigma)
     
     out <- list()
     
     # low-dimensional
-    out$low.dim <- HOLS.check(x.sub, y, simulated.pval = FALSE)
+    out$low.dim <- HOLS.check(x.sub[, -3], y, simulated.pval = FALSE)
     
     # high-dimensional
     # out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
@@ -114,6 +115,6 @@ for (n in n.vec) {
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(simulation.summary(simulation, variables = 3))
+  print(simulation.summary(simulation, variables = c(2, 3)))
 }
 
