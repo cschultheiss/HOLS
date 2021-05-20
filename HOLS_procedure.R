@@ -1,9 +1,12 @@
 require(hdi)
 require(MASS)
 
+source('debias_z3.R')
+
 HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
                        standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
-                       return.z = FALSE, return.w = FALSE, verb = FALSE, ...){
+                       return.z = FALSE, return.w = FALSE, debias.z3 = FALSE, z3tilde = NULL,
+                       return.z3tilde = FALSE, verb = FALSE, ...){
   
   if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
@@ -11,7 +14,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
   if (length(y) != n) stop("Dimensions do not match")
   
   x <- scale(x, center = center, scale = standardize)
-  y <- scale(y, center = center, scale = standardize)
+  y <- scale(y, center = center, scale = FALSE)
   if (p >= n && !use.Lasso) 
     stop("use.Lasso is set to FALSE, this is not okay for high-dimensional data")
   
@@ -25,14 +28,24 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
     if (is.null(lasso.proj.out)) lasso.proj.out <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, ...)
     beta.OLS <- lasso.proj.out$bhat
     z <- lasso.proj.out$Z
+    if (debias.z3 && is.null(z3tilde)) {
+      z3tilde <- lasso.proj.z3tilde(x, z^3, standardize = FALSE, ...)$z3tilde
+    }
     for (j in 1:p) {
       if (verb) cat("Checking variable", j, "\n")
       zj <- as.vector(z[, j])
       w[,j] <- wj <- y- x[, -j] %*% lasso.proj.out$betahat[-j]
-      # beta^{HOLS}_j according to definition
-      beta.HOLS[j] <- crossprod(zj^3, wj)/(crossprod(zj^3, x[,j]))
-      # ||var.scale[,j]||^2 is the scale for j s variance
-      var.scale[,j] <- (zj^3/(crossprod(zj^3, x[,j]))[1,1]-zj/(crossprod(zj, x[,j]))[1,1])
+      if (debias.z3) {
+        # beta^{HOLS}_j according to definition
+        beta.HOLS[j] <- crossprod(z3tilde[ ,j], wj)/(crossprod(z3tilde[ ,j], x[,j]))
+        # ||var.scale[,j]||^2 is the scale for j s variance
+        var.scale[,j] <- (z3tilde[ ,j]/(crossprod(z3tilde[ ,j], x[,j]))[1,1]-zj/(crossprod(zj, x[,j]))[1,1])
+      } else {
+        # beta^{HOLS}_j according to definition
+        beta.HOLS[j] <- crossprod(zj^3, wj)/(crossprod(zj^3, x[,j]))
+        # ||var.scale[,j]||^2 is the scale for j s variance
+        var.scale[,j] <- (zj^3/(crossprod(zj^3, x[,j]))[1,1]-zj/(crossprod(zj, x[,j]))[1,1])
+      }
     }
     sigma.hat <- lasso.proj.out$sigmahat
   } else {
@@ -91,6 +104,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
               pval = pval, pval.corr = pval.corr)
   if (return.z) out$z <- z
   if (return.w) out$w <- w
+  if (return.z3tilde && debias.z3) out$z3tilde <- z3tilde
   if (!use.Lasso) {
     # if the desparsified Lasso was used, chisq test is not applicable, since one would sum the bias terms
     delta.beta <- beta.HOLS - beta.OLS
