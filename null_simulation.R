@@ -1,5 +1,6 @@
 require(MASS)
 require(hdi)
+require(glmnet)
 require(Matrix)
 require(tictoc)
 require(doRNG)
@@ -10,13 +11,14 @@ require(git2r)
 require(expm)
 
 source('HOLS_procedure.R')
+source('simulation_analysis.R')
 
 commit <- revparse_single(revision = "HEAD")
 print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
 
 save <- TRUE
 resname <- paste0("results ", format(Sys.time(), "%d-%b-%Y %H.%M"))
-nsim <- 2000
+nsim <- 200
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -48,15 +50,9 @@ set.seed(42)
 
 tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
-             .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+             .packages = c("MASS", "Matrix", "hdi", "glmnet", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   # Gaussian x
   x <- mvrnorm(n, rep(0,p), Cov)
-
-  # x <- matrix(NA, n, p)            
-  # for (j in 1:p){
-  #   x[, j] <- rexp(n, sqrt(2)) * sample(c(-1, 1), n, TRUE)
-  # }
-  # x <- x %*% sqrt.Cov
 
   x2 <- x[, 1:p2]
   y.true <- x%*%beta
@@ -69,7 +65,9 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   out$low.dim <- HOLS.check(x2, y, simulated.pval = TRUE)
   
   # high-dimensional
-  # out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
+  lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE)
+  out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp)
+  out$high.dim.new <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp, debias.z3 = TRUE)
   out                              
 }
 toc()
@@ -81,13 +79,18 @@ colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                        rep("pval", p2), rep("pval.corr", p2),
                        "pval.glob", rep("pval.sim", p2),
                        rep("pval.corr.sim", p2), "pval.corr.sim")
-# res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
-# colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
-#                         rep("sd.scale", p), "sigma.hat",
-#                         rep("pval", p), rep("pval.corr", p))
-res.high <- NULL
+res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
+colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
+                        rep("sd.scale", p), "sigma.hat",
+                        rep("pval", p), rep("pval.corr", p))
+res.high.new <- matrix(unlist(res[, "high.dim.new"]), byrow = TRUE, nrow = nsim)
+colnames(res.high.new) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
+                        rep("sd.scale", p), "sigma.hat",
+                        rep("pval", p), rep("pval.corr", p))
 
-simulation <- list(low.dim = res.low, high.dim = res.high,
+simulation <- list(low.dim = res.low, high.dim = res.high, high.dim.new = res.high.new,
                    r.seed = attr(res, "rng"), "commit" = commit)
 
 if (save) save(simulation, file = paste("results/", resname, ".RData", sep = ""))
+
+simulation.summary(simulation)
