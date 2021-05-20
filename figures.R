@@ -1,5 +1,6 @@
-folder <- "results/11-May-2021 16.22"
+folder <- "results/19-May-2021 17.33"
 flz <- list.files(folder)
+
 
 j <- 0
 for (file in flz) {
@@ -16,6 +17,10 @@ for (file in flz) {
                        simulation$low.dim[,"sigma.hat"], 2, mean)
   
 }
+
+var.ind <- 1:p
+var.ind <- c(1:(p+1))[-3]
 matplot(zs[, 1], zs[, -1], log ="xy", xlab = "n", ylab = "Average z-statistics", pch = 1)
-legend("topleft", col = 1:7, legend = paste("x", 1:p, sep=""), pch = 1)
+legend("topleft", col = 1:length(var.ind), legend = paste("x", var.ind, sep=""), pch = 1)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, -1]) / sqrt(zs[4, 1]), lty = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 3]) / sqrt(zs[4, 1]), lty = 2)
