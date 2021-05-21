@@ -52,7 +52,14 @@ tic()
 res<-foreach(gu = 1:nsim, .combine = rbind,
              .packages = c("MASS", "Matrix", "hdi", "glmnet", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   # Gaussian x
-  x <- mvrnorm(n, rep(0,p), Cov)
+  # x <- mvrnorm(n, rep(0,p), Cov)
+  
+  psi <- matrix(rexp(n * p, rate = sqrt(2)) * sample(c(-1,1), n * p, TRUE), nrow = n)
+  x <- matrix(NA, nrow = n, ncol = p)
+  x[ ,1] <- psi[, 1]
+  for (j in 2:p){
+    x[ ,j] <- rho * x[ , j - 1] + sqrt(1- rho^2) * psi[, j]
+  }
 
   x2 <- x[, 1:p2]
   y.true <- x%*%beta
