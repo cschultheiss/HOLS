@@ -16,6 +16,7 @@ lasso.proj.z3tilde <- function (x, z3, standardize = TRUE,
   scaleZ <- Zout$scaleZ
 
   out <- list(z3tilde = scale(Z, center = FALSE, scale = 1/scaleZ))
+  out$diff <- which(apply(abs(out$z3tilde - z3), 2, max) > 1e-6 * mean(abs(z3)))
   return(out)
 }
 
@@ -164,7 +165,7 @@ cv.nodewise.totalerr.z3tilde <- function (c, K, dataselects, x, z3, lambdas)
                         y = z3[!whichj, c, drop = FALSE], lambda = lambdas)
     predictions <- predict(glmnetfit, newx = x[whichj, -c, 
                                                drop = FALSE], s = lambdas)
-    totalerr[, i] <- apply((x[whichj, c] - predictions)^2, 
+    totalerr[, i] <- apply((z3[whichj, c] - predictions)^2, 
                            2, mean)
   }
   totalerr

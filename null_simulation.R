@@ -74,7 +74,8 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # high-dimensional
   lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE)
   out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp)
-  out$high.dim.new <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp, debias.z3 = TRUE)
+  out$high.dim.new <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp,
+                                 debias.z3 = TRUE, return.changed = TRUE)
   out                              
 }
 toc()
@@ -85,7 +86,7 @@ colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                        rep("sd.scale", p2), "sigma.hat",
                        rep("pval", p2), rep("pval.corr", p2),
                        "pval.glob", rep("pval.sim", p2),
-                       rep("pval.corr.sim", p2), "pval.corr.sim")
+                       rep("pval.corr.sim", p2), "pval.glob.sim")
 res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
 colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
                         rep("sd.scale", p), "sigma.hat",
@@ -93,7 +94,7 @@ colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
 res.high.new <- matrix(unlist(res[, "high.dim.new"]), byrow = TRUE, nrow = nsim)
 colnames(res.high.new) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
                         rep("sd.scale", p), "sigma.hat",
-                        rep("pval", p), rep("pval.corr", p))
+                        rep("pval", p), rep("pval.corr", p), "changed")
 
 simulation <- list(low.dim = res.low, high.dim = res.high, high.dim.new = res.high.new,
                    r.seed = attr(res, "rng"), "commit" = commit)

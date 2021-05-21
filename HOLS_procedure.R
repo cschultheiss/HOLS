@@ -6,7 +6,7 @@ source('debias_z3.R')
 HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
                        standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
                        return.z = FALSE, return.w = FALSE, debias.z3 = FALSE, z3tilde = NULL,
-                       return.z3tilde = FALSE, verb = FALSE, ...){
+                       return.z3tilde = FALSE, return.changed = FALSE, verb = FALSE, ...){
   
   if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
@@ -29,7 +29,9 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
     beta.OLS <- lasso.proj.out$bhat
     z <- lasso.proj.out$Z
     if (debias.z3 && is.null(z3tilde)) {
-      z3tilde <- lasso.proj.z3tilde(x, z^3, standardize = FALSE, ...)$z3tilde
+      lasso.proj.z3tilde.out <- lasso.proj.z3tilde(x, z^3, standardize = FALSE, ...)
+      z3tilde <- lasso.proj.z3tilde.out$z3tilde
+      changed <- length(lasso.proj.z3tilde.out$diff)
     }
     for (j in 1:p) {
       if (verb) cat("Checking variable", j, "\n")
@@ -105,6 +107,8 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = 
   if (return.z) out$z <- z
   if (return.w) out$w <- w
   if (return.z3tilde && debias.z3) out$z3tilde <- z3tilde
+  if (return.changed && debias.z3) out$changed <- changed
+    
   if (!use.Lasso) {
     # if the desparsified Lasso was used, chisq test is not applicable, since one would sum the bias terms
     delta.beta <- beta.HOLS - beta.OLS
