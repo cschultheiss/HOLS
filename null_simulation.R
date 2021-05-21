@@ -72,10 +72,10 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   out$low.dim <- HOLS.check(x2, y, simulated.pval = TRUE)
   
   # high-dimensional
-  lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE)
+  lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, do.ZnZ = TRUE)
   out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp)
   out$high.dim.new <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp,
-                                 debias.z3 = TRUE, return.changed = TRUE)
+                                 debias.z3 = TRUE, return.changed = TRUE, do.ZnZ = TRUE)
   out                              
 }
 toc()
