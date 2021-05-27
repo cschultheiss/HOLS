@@ -68,13 +68,14 @@ for (n in n.vec) {
      
      summ <- summary(lm(x[, 4]^3 ~ -1 + x))
      
-     out <- list(beta = summ$coefficients[,"Estimate"], sigma = summ$sigma,
+     out <- list()
+     out$res <- list(beta = summ$coefficients[,"Estimate"], sigma = summ$sigma,
                  t.vals = summ$coefficients[,"t value"] )
      out                           
   } 
   toc()
   stopCluster(cl)
-  res.mat <- matrix(unlist(res), byrow = TRUE, nrow = nsim)
+  res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
   colnames(res.mat) <- c(rep("beta.FOLS", p), "sigma", rep("t.val", p))
   
   simulation <- list(res = res.mat, # high.dim = res.high,
