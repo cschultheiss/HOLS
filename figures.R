@@ -75,3 +75,31 @@ matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
         ylab = "Empirical probability")
 legend("topleft", col = 1:length(var.ind), legend = paste("n=", zs[,1], sep=""), lty = 1)
 apply(true.model, 2, mean)
+
+
+savefolder <- "Figures/Gaussian null"
+load("~/Documents/ETH/PhD/HOLS/results/Gaussian null.RData")
+pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
+pval.h <- simulation$high.dim[,which(colnames(simulation$high.dim) == "pval")] 
+q <- (0:100)/100
+plotfac <- 4
+pointfrac <- 0.8
+cx <- 0.75
+
+png(paste(savefolder, "/low-dim.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1, 2))
+hist(pval, freq = FALSE, main = "Histogram of p-values", xlab = "p-value")
+qqplot(q, pval, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
+       ylab = "Quantiles of p-values", main = "Q-Q plot")
+abline(0, 1, col ="grey", lty = 2, lwd = 4)
+dev.off()
+
+png(paste(savefolder, "/high-dim.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1, 2))
+hist(pval.h, freq = FALSE, main = "Histogram of p-values", xlab = "p-value")
+qqplot(q, pval.h, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
+       ylab = "Quantiles of p-values", main = "Q-Q plot")
+abline(0, 1, col ="grey", lty = 2, lwd = 4)
+dev.off()
