@@ -42,8 +42,8 @@ for (file in flz) {
 }
 
 var.ind <- 1:p
-matplot(zs[, 1], zs[, -1], log ="xy", xlab = "n", ylab = "Average z-statistics", pch = 1)
-legend("topleft", col = 1:length(var.ind), legend = paste("x", var.ind, sep=""), pch = 1, horiz = TRUE)
+matplot(zs[, 1], zs[, -1], log ="xy", xlab = "n", ylab = "Average z-statistics", pch = 1, lwd = 2)
+legend("topleft", col = 1:length(var.ind), legend = paste("x", var.ind, sep=""), pch = 1, horiz = TRUE, pt.lwd = 2)
 
 zlims <- zs[, 1]^(0.25) / (zs[1,1])^0.25 * 0.5
 zlims.var <- (0.1) * (1.1^(0:75))
