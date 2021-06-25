@@ -11,3 +11,6 @@ riboflavin_z.RData
 GTEX
 read_and_preprocess_GTEX.ipynb
 .ipynb_checkpoints
+Figures
+consub.Z.RData
+regress1.RData
