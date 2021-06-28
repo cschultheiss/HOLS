@@ -1,4 +1,7 @@
-folder <- "results/19-May-2021 17.33"
+require(latex2exp)
+
+folder <- "results/SEM missing x3"
+savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
 
 
@@ -20,10 +23,29 @@ for (file in flz) {
 
 var.ind <- 1:p
 var.ind <- c(1:(p+1))[-3]
-matplot(zs[, 1], zs[, -1], log ="xy", xlab = "n", ylab = "Average z-statistics", pch = 1)
-legend("topleft", col = 1:length(var.ind), legend = paste("x", var.ind, sep=""), pch = 1)
+# nmat <- matrix(rep(zs[,1], p), ncol = p)
+# alln <- nmat[,1]
+# scat <- seq(0.95, 1.05, 0.02)
+# nmat.scat <- tcrossprod(alln, scat)
+labels <- eval(parse(text = paste("c(", paste("TeX('$X_", var.ind, "$')", sep = "", collapse = ","), ")")))
+
+plotfac <- 4
+pointfrac <- 0.8
+cx <- 0.75
+ord <- matrix(1:p, nrow = 2, ncol = 3, byrow = T)
+
+png(paste(savefolder, "/avg-z.png", sep = ""), width = 300 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+matplot(zs[, 1], zs[, -1], log ="xy", xlab = "n",
+        ylab = "Average absolute z-statistics", main = TeX("Missing $X_3$"),
+        pch = 1:p, col = c(1:(p+1))[-5], lwd = 2)
+legend("topleft", ncol = 3, legend = labels[ord],
+        pch = (1:p)[ord], col = (c(1:(p+1))[-5])[ord], pt.lwd = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, -1]) / sqrt(zs[4, 1]), lty = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 3]) / sqrt(zs[4, 1]), lty = 2)
+dev.off()
+
+
 
 folder <- "results/27-May-2021 17.35"
 flz <- list.files(folder)
