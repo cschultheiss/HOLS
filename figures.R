@@ -46,8 +46,9 @@ lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 3]) / sqrt(zs[4, 1]), lty = 2)
 dev.off()
 
 
+folder <- "results/SEM ancestor x4"
+savefolder <- "Figures/SEM ancestor x4"
 
-folder <- "results/27-May-2021 17.35"
 flz <- list.files(folder)
 
 
@@ -71,8 +72,10 @@ zlims <- zs[, 1]^(0.25) / (zs[1,1])^0.25 * 0.5
 zlims.var <- (0.1) * (1.1^(0:75))
 true.model <- matrix(NA, 200, length(flz))
 true.model.var <- matrix(NA, length(zlims.var), length(flz))
+good.model.var <- matrix(NA, length(zlims.var), length(flz))
 max.bad <- matrix(NA, 200, length(flz))
 min.good <- matrix(NA, 200, length(flz)) 
+max.good <- matrix(NA, 200, length(flz)) 
 is.model <- function(selected){
   good <- all(c(1:4) %in% selected)
   bad <- any(c(5:7) %in% selected)
@@ -89,13 +92,30 @@ for (file in flz) {
   true.model[, j] <- sapply(which.selected, is.model)
   
   max.bad[, j] <- apply(abs(simulation$res[ ,13:15]), 1, max)
-  min.good[, j] <- apply(abs(simulation$res[ ,9:12]), 1, min)
+  min.good[, j] <- apply(abs(simulation$res[ ,9:11]), 1, min)
+  max.good[, j] <- apply(abs(simulation$res[ ,9:11]), 1, max)
   true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.bad[,j]) & (x < min.good[,j]))) 
+  good.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.bad[,j]) & (x < max.good[,j]))) 
 }
+
+labels <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:7, "$')", sep = "", collapse = ","), ")")))
+
+png(paste(savefolder, "/thresh-z.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow=c(1,2))
+par(xpd=TRUE)
 matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
-        main = "Selecting a good model", xlab = "Threshold on the absolute z-statistics",
-        ylab = "Empirical probability")
-legend("topleft", col = 1:length(var.ind), legend = paste("n=", zs[,1], sep=""), lty = 1)
+        main = "Selecting all ancestors", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
+legend('topleft', inset = -0.05, col = 1:3, lwd = 2, legend = labels[1:3], lty = 1)
+
+matplot(zlims.var, good.model.var, lty = 1, type = "l", log = "x",
+        main = "Selecting any ancestor", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
+legend('topleft', inset = -0.05, col = c(4, 6, 7), lwd = 2, legend = labels[4:6], lty = 1)
+par(xpd=FALSE)
+dev.off()
+
 apply(true.model, 2, mean)
 
 
