@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/28-Jun-2021 15.28"
-savefolder <- "Figures/SEM missing x3"
+folder <- "results/Gaussian eps_x2"
+savefolder <- "Figures/Gaussian eps_x"
 flz <- list.files(folder)
 
 
@@ -43,7 +43,6 @@ legend("topleft", ncol = 3, legend = labels[ord][1:pp],
         pch = (1:p)[ord], col = (c(1:(p+1))[-5])[ord], pt.lwd = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 15]) / sqrt(zs[4, 1]), lty = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 16]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 17]) / sqrt(zs[4, 1]), lty = 2)
 dev.off()
 
 
