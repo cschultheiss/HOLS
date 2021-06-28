@@ -39,13 +39,13 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
-p <- 7
-p2 <- 6
-# rho <- 0.6
-# Cov <- toeplitz(rho^(seq(0, p - 1)))
-# Cov <- Cov * solve(Cov)[5,5]
-# sel.index <- c(1, 5, 10, 15, 20)
-# ind <- sel.index
+p <- 30
+p2 <- 30
+rho <- 0.6
+Cov <- toeplitz(rho^(seq(0, p - 1)))
+Cov <- Cov * solve(Cov)[5,5]
+sel.index <- c(1, 5, 10, 15, 20)
+ind <- sel.index
 beta <- rep(0, p)
 # beta[sel.index] <- 1
 sigma <- 1
@@ -67,28 +67,30 @@ for (n in n.vec) {
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
-    x1 <- rt(n, df = 7) / sqrt(1.4)
-    x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
-    x3 <- rt(n, df = 7) / sqrt(1.4)
-    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE) 
-    # x3 <- sqrt(0.5) * (x3 + H)
-    x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
-    x5 <- rt(n, df = 7) / sqrt(1.4)
-    x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
-    x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
-
-    x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
-    
+    # x1 <- rt(n, df = 7) / sqrt(1.4)
+    # x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
+    # x3 <- rt(n, df = 7) / sqrt(1.4)
+    # # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE) 
+    # # x3 <- sqrt(0.5) * (x3 + H)
+    # x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
+    # x5 <- rt(n, df = 7) / sqrt(1.4)
+    # x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
+    # x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
+    # 
+    # x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
+                 
+    x <- mvrnorm(n, rep(0,p), Cov)
+    H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
+    x[ ,15] <- x[ ,15] + H
     x.sub <- x[, 1:p]
-    # y0 <- x%*%beta
-    # y.true <- y0 + alpha * H
-    y.true <- alpha * x3
+    y0 <- x%*%beta
+    y.true <- y0 + alpha * H
     y <- y.true + rnorm(n, sd = sigma)
     
     out <- list()
     
     # low-dimensional
-    out$low.dim <- HOLS.check(x.sub[, -3], y, simulated.pval = FALSE)
+    out$low.dim <- HOLS.check(x.sub, y, simulated.pval = FALSE)
     
     # high-dimensional
     # out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
@@ -115,6 +117,6 @@ for (n in n.vec) {
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(simulation.summary(simulation, variables = c(2, 3)))
+  print(simulation.summary(simulation, variables = c(14 : 16)))
 }
 
