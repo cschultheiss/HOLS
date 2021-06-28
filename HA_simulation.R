@@ -56,7 +56,8 @@ set.seed(42)
 seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
-
+n.vec <- n.vec[6]
+seed.vec <- seed.vec[6]
 
 for (n in n.vec) {
   seed.n <- seed.n + 1
