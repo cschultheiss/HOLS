@@ -56,6 +56,8 @@ set.seed(42)
 seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
+n.vec <- n.vec[6]
+seed.vec <- seed.vec[6]
 
 for (n in n.vec) {
   seed.n <- seed.n + 1
@@ -64,8 +66,9 @@ for (n in n.vec) {
   cl<-makeSOCKcluster(16) 
   registerDoSNOW(cl)
   tic()
-  res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+  # res<-foreach(gu = 1:nsim, .combine = rbind,
+  #              .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+  res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
     # x1 <- rt(n, df = 7) / sqrt(1.4)
     # x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     # x3 <- rt(n, df = 7) / sqrt(1.4)
