@@ -24,7 +24,7 @@ if (save) {
 }
 
 
-nsim <- 10
+nsim <- 200
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -39,25 +39,26 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
-p <- 30
-p2 <- 30
-rho <- 0.6
-Cov <- toeplitz(rho^(seq(0, p - 1)))
-Cov <- Cov * solve(Cov)[5,5]
-sel.index <- c(1, 5, 10, 15, 20)
-ind <- sel.index
-beta <- rep(0, p)
-beta[sel.index] <- 1
-sigma <- 1
-alpha <- sqrt(2.5)
+p <- 26
+p2 <- 26
+# rho <- 0.6
+# Cov <- toeplitz(rho^(seq(0, p - 1)))
+# Cov <- Cov * solve(Cov)[5,5]
+# sel.index <- c(1, 5, 10, 15, 20)
+# ind <- sel.index
+# beta <- rep(0, p)
+# beta[sel.index] <- 1
+# sigma <- 1
+# alpha <- sqrt(2.5)
+data("Boston")
+bos <- scale(Boston[,-14])
+nb <- dim(bos)[1]
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
 seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
-n.vec <- n.vec[6]
-seed.vec <- seed.vec[6]
 
 for (n in n.vec) {
   seed.n <- seed.n + 1
@@ -66,10 +67,9 @@ for (n in n.vec) {
   cl<-makeSOCKcluster(16) 
   registerDoSNOW(cl)
   tic()
-  # res<-foreach(gu = 1:nsim, .combine = rbind,
-  #              .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
-  res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
-    print(gu)
+  res<-foreach(gu = 1:nsim, .combine = rbind,
+               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+  # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
     # x1 <- rt(n, df = 7) / sqrt(1.4)
     # x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     # x3 <- rt(n, df = 7) / sqrt(1.4)
@@ -82,13 +82,23 @@ for (n in n.vec) {
     # 
     # x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
                  
-    x <- mvrnorm(n, rep(0,p), Cov)
-    H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
-    x[ ,15] <- x[ ,15] + H
-    x.sub <- x[, 1:p]
-    y0 <- x%*%beta
-    y.true <- y0 + alpha * H
-    y <- y.true + rnorm(n, sd = sigma)
+    # x <- mvrnorm(n, rep(0,p), Cov)
+    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
+    # x[ ,15] <- x[ ,15] + H
+    # x.sub <- x[, 1:p]
+    # y0 <- x%*%beta
+    # y.true <- y0 + alpha * H
+    # y <- y.true + rnorm(n, sd = sigma)
+                 
+    ind.1 <- sample(1:nb, n, TRUE)
+    ind.2 <- sample(1:nb, n, TRUE)
+    b1 <- bos[ind.1,]
+    b2 <- bos[ind.2,]
+    eps <- rnorm(n)
+    b1[, 1] <- b1[, 1] + eps
+    b1[, 7] <- b1[, 7] - eps
+    x.sub <- x <- cbind(b1, b2)
+    y <- eps
     
     out <- list()
     
@@ -120,6 +130,6 @@ for (n in n.vec) {
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(simulation.summary(simulation, variables = c(14 : 16)))
+  print(simulation.summary(simulation, variables = c(14 : 26)))
 }
 
