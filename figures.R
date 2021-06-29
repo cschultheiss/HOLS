@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/Gaussian eps_x2"
-savefolder <- "Figures/Gaussian eps_x"
+folder <- "results/block independent"
+savefolder <- "Figures/block independent"
 flz <- list.files(folder)
 
 
@@ -21,7 +21,7 @@ for (file in flz) {
   
 }
 
-var.ind <- 13:17
+var.ind <- c(1, 2, 7, 13, 14, 15, 20, 26)
 pp <- length(var.ind)
 # nmat <- matrix(rep(zs[,1], p), ncol = p)
 # alln <- nmat[,1]
@@ -32,17 +32,21 @@ labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind, "}$')", sep 
 plotfac <- 4
 pointfrac <- 0.8
 cx <- 0.75
-ord <- matrix(1:pp, nrow = 2, ncol = 3, byrow = T)
+ord <- matrix(1:pp, nrow = 2, ncol = 4, byrow = T)
 
 png(paste(savefolder, "/avg-z.png", sep = ""), width = 300 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
+par(xpd = TRUE)
 matplot(zs[, 1], zs[, var.ind + 1], log ="xy", xlab = "n",
-        ylab = "Average absolute z-statistics", main = TeX("Confounding onto $X_{15}$"),
-        pch = 1:p, col = c(1:(pp+1))[-5], lwd = 2)
-legend("topleft", ncol = 3, legend = labels[ord][1:pp],
-        pch = (1:p)[ord], col = (c(1:(p+1))[-5])[ord], pt.lwd = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 15]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 16]) / sqrt(zs[4, 1]), lty = 2)
+        ylab = "Average absolute z-statistics", main = TeX("Confounding onto $X_{1}$ and $X_{7}$"),
+        pch = 1:pp, col = rep(1:4, 2), lwd = 2)
+legend("topleft", inset = -0.1, ncol = 4, legend = labels[ord][1:pp],
+        pch = (1:pp)[ord], col = rep(1:4, 2)[ord], pt.lwd = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 2]) / sqrt(zs[4, 1]), lty = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 8]) / sqrt(zs[4, 1]), lty = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 3]) / sqrt(zs[4, 1]), lty = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 14]) / sqrt(zs[4, 1]), lty = 2)
+par(xpd = FALSE)
 dev.off()
 
 
