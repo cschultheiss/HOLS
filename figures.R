@@ -21,7 +21,7 @@ for (file in flz) {
   
 }
 
-var.ind <- c(1, 2, 7, 13, 14, 15, 20, 26)
+var.ind <- c(1, 7, 9, 13, 14, 20, 22, 26)
 pp <- length(var.ind)
 # nmat <- matrix(rep(zs[,1], p), ncol = p)
 # alln <- nmat[,1]
@@ -34,20 +34,51 @@ pointfrac <- 0.8
 cx <- 0.75
 ord <- matrix(1:pp, nrow = 2, ncol = 4, byrow = T)
 
-png(paste(savefolder, "/avg-z.png", sep = ""), width = 300 * plotfac,
+
+
+
+
+conf.ind <- 1:13
+unconf.ind <- 14:26
+max.unconf <- matrix(NA, 200, length(flz))
+min.conf <- matrix(NA, 200, length(flz)) 
+zlims.var <- (0.1) * (1.1^(0:60))
+true.model.var <- matrix(NA, length(zlims.var), length(flz))
+j <- 0
+for (file in flz) {
+  j <- j + 1
+  load(paste(folder, "/", file, sep = ""))
+  all.z <- abs(simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.HOLS")] - 
+                 simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
+    simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
+    simulation$low.dim[,"sigma.hat"]
+  min.conf[, j] <- apply(all.z[, conf.ind], 1, min)
+  max.unconf[, j] <- apply(all.z[, unconf.ind], 1, max)
+  true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
+}
+
+labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+
+png(paste(savefolder, "/avg-z.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
 par(xpd = TRUE)
 matplot(zs[, 1], zs[, var.ind + 1], log ="xy", xlab = "n",
         ylab = "Average absolute z-statistics", main = TeX("Confounding onto $X_{1}$ and $X_{7}$"),
         pch = 1:pp, col = rep(1:4, 2), lwd = 2)
 legend("topleft", inset = -0.1, ncol = 4, legend = labels[ord][1:pp],
-        pch = (1:pp)[ord], col = rep(1:4, 2)[ord], pt.lwd = 2)
+       pch = (1:pp)[ord], col = rep(1:4, 2)[ord], pt.lwd = 2)
+par(xpd = FALSE)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 2]) / sqrt(zs[4, 1]), lty = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 8]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 3]) / sqrt(zs[4, 1]), lty = 2)
+lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 10]) / sqrt(zs[4, 1]), lty = 2)
 lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 14]) / sqrt(zs[4, 1]), lty = 2)
-par(xpd = FALSE)
+matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
+        main = "Perfect recovery of U", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
+legend('topleft', col = (1:6)[-5], lwd = 2, legend = labels.rec, lty = 1)
 dev.off()
+
 
 
 folder <- "results/SEM ancestor x4"
