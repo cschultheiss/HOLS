@@ -24,7 +24,7 @@ if (save) {
 }
 
 
-nsim <- 200
+nsim <- 10
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -69,6 +69,7 @@ for (n in n.vec) {
   # res<-foreach(gu = 1:nsim, .combine = rbind,
   #              .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
+    print(gu)
     # x1 <- rt(n, df = 7) / sqrt(1.4)
     # x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
     # x3 <- rt(n, df = 7) / sqrt(1.4)
