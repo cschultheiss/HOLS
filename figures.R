@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/block independent"
-savefolder <- "Figures/block independent"
+folder <- "results/SEM missing x3"
+savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
 
 
@@ -21,28 +21,30 @@ for (file in flz) {
   
 }
 
-var.ind <- c(1, 7, 9, 13, 14, 20, 22, 26)
+# var.ind <- c(1, 7, 9, 13, 14, 20, 22, 26)
+var.ind <- 1:6
 pp <- length(var.ind)
+var.ind.label <- (1:7)[-3]
 # nmat <- matrix(rep(zs[,1], p), ncol = p)
 # alln <- nmat[,1]
 # scat <- seq(0.95, 1.05, 0.02)
 # nmat.scat <- tcrossprod(alln, scat)
-labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind, "}$')", sep = "", collapse = ","), ")")))
-
+labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind.label, "}$')", sep = "", collapse = ","), ")")))
+ord <- matrix(1:pp, nrow = 2, ncol = 3, byrow = T)
 plotfac <- 4
 pointfrac <- 0.8
 cx <- 0.75
-ord <- matrix(1:pp, nrow = 2, ncol = 4, byrow = T)
 
 
 
 
 
-conf.ind <- 1:13
-unconf.ind <- 14:26
+
+conf.ind <- 2:3
+unconf.ind <- (1:6)[-conf.ind]
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
-zlims.var <- (0.1) * (1.1^(0:60))
+zlims.var <- (0.1) * (1.1^(0:64))
 true.model.var <- matrix(NA, length(zlims.var), length(flz))
 j <- 0
 for (file in flz) {
@@ -57,26 +59,26 @@ for (file in flz) {
   true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
 }
 
-labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:7, "$')", sep = "", collapse = ","), ")")))
 
-png(paste(savefolder, "/avg-z.png", sep = ""), width = 600 * plotfac,
+png(paste(savefolder, "/z-and-rec.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 par(xpd = TRUE)
 matplot(zs[, 1], zs[, var.ind + 1], log ="xy", xlab = "n",
-        ylab = "Average absolute z-statistics", main = TeX("Confounding onto $X_{1}$ and $X_{7}$"),
-        pch = 1:pp, col = rep(1:4, 2), lwd = 2)
-legend("topleft", inset = -0.1, ncol = 4, legend = labels[ord][1:pp],
-       pch = (1:pp)[ord], col = rep(1:4, 2)[ord], pt.lwd = 2)
+        ylab = "Average absolute z-statistics", # main = TeX("Confounding onto $X_{1}$ and $X_{7}$"),
+        pch = 1:pp, col = (1:7)[-5], lwd = 2)
+legend("topleft", inset = c(0, -0), ncol = 3, legend = labels[ord][1:pp],
+       pch = (1:pp)[ord], col = (1:7)[-5][ord], pt.lwd = 2)
 par(xpd = FALSE)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 2]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 8]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 10]) / sqrt(zs[4, 1]), lty = 2)
-lines(zs[, 1], sqrt(zs[, 1]) * max(zs[4, 14]) / sqrt(zs[4, 1]), lty = 2)
+which.line <- (2:3)
+for (j in which.line){
+  lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
+}
 matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
         main = "Perfect recovery of U", xlab = "Threshold on the absolute z-statistics",
-        ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
-legend('topleft', col = (1:6)[-5], lwd = 2, legend = labels.rec, lty = 1)
+        ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
+legend('topleft', col = (1:7)[-5], lwd = 2, legend = labels.rec, lty = 1)
 dev.off()
 
 
