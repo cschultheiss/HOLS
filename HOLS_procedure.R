@@ -3,7 +3,7 @@ require(MASS)
 
 source('debias_z3.R')
 
-HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = TRUE, center = FALSE,
+HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center = TRUE,
                        standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
                        return.z = FALSE, return.w = FALSE, debias.z3 = FALSE, z3tilde = NULL,
                        return.z3tilde = FALSE, return.changed = FALSE, verb = FALSE, ...){
