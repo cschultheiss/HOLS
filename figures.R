@@ -42,10 +42,18 @@ cx <- 0.75
 
 conf.ind <- 2:3
 unconf.ind <- (1:6)[-conf.ind]
+beta0 <- rep(0, 6)
+beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
+dbeta <- beta0 - beta.OLS
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
 zlims.var <- (0.1) * (1.1^(0:64))
 true.model.var <- matrix(NA, length(zlims.var), length(flz))
+U.sub.var <- matrix(NA, length(zlims.var), length(flz))
+diff.var <- matrix(NA, length(zlims.var), length(flz))
+diff.U <- numeric(length(flz))
+size.var <- matrix(NA, length(zlims.var), length(flz))
+U.size <- matrix(NA, 200 + 1, length(flz))
 j <- 0
 for (file in flz) {
   j <- j + 1
@@ -54,9 +62,28 @@ for (file in flz) {
                  simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
     simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
     simulation$low.dim[,"sigma.hat"]
+  all.OLS <- simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]
+  all.diff <- t(t(all.OLS) - beta0)
+  diff.U[j] <- mean(all.diff[,unconf.ind]^2)
+  k <- 0
+  for (lim in zlims.var){
+    k <- k + 1
+    which.selected <- apply(all.z < lim, 1, which)
+    if(is.matrix(which.selected)) which.selected <- split(which.selected, rep(1:ncol(which.selected), each = nrow(which.selected)))
+    diff.var[k, j] <- mean(sapply(which.selected, function(ws) sum(abs(dbeta[ws]))))
+    size.var[k ,j] <- mean(sapply(which.selected, function(ws) sum(unconf.ind %in% ws)))
+  }
   min.conf[, j] <- apply(all.z[, conf.ind], 1, min)
   max.unconf[, j] <- apply(all.z[, unconf.ind], 1, max)
   true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
+  U.sub.var[, j] <- sapply(zlims.var, function(x) mean((x < min.conf[,j]))) 
+  
+  k <- 0
+  z.min <- apply(all.z[,conf.ind], 1, min)
+  for (thresh in c(sort(z.min), Inf)){
+    k <- k + 1
+    U.size[k, j] <- mean(apply(all.z[,unconf.ind] <= thresh - 1e-6, 1, sum))
+  }
 }
 
 labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:7, "$')", sep = "", collapse = ","), ")")))
@@ -81,6 +108,16 @@ matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
 legend('topleft', col = (1:7)[-5], lwd = 2, legend = labels.rec, lty = 1)
 dev.off()
 
+part.rec <- (length(unconf.ind) - size.var)/length(unconf.ind) + diff.var/sum(abs(dbeta))
+matplot(zlims.var, part.rec , log ="x", type = "l", lty = 1,
+        main = "Partial recovery of U", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Error", col = (1:7)[-5], lwd = 2)
+legend('bottomleft', col = (1:7)[-5], ncol = 2, lwd = 2, legend = labels.rec, lty = 1)
+
+matplot((0:200)/200, U.size, type = "l", lty = 1,
+        main = "Partial recovery of U", xlab = TeX("$P(\\hat{U}\\subseteq U)$"),
+        ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
+legend('bottomright', col = (1:7)[-5], ncol = 2, lwd = 2, legend = labels.rec, lty = 1)
 
 
 folder <- "results/SEM ancestor x4"
