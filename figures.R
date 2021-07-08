@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/SEM missing x3"
-savefolder <- "Figures/SEM missing x3"
+folder <- "results/block independent"
+savefolder <- "Figures/block independent"
 flz <- list.files(folder)
 
 
@@ -40,16 +40,20 @@ cx <- 0.75
 
 
 
-conf.ind <- conf.ind <- 2:3
-unconf.ind <- (1:6)[-conf.ind]
-beta0 <- rep(0, 6)
-beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
+conf.ind <- conf.ind <- 1:13
+unconf.ind <- (1:26)[-conf.ind]
+# beta0 <- rep(0, 6)
+# beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
 # beta0 <- rep(0, 30)
 # beta.OLS <- c(rep(0, 13), -0.3487806,  0.7905694, -0.3487806, rep(0, 14))
+beta0 <- rep(0, 26)
+beta.OLS <- c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
+              -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
+              rep(0, 13))
 dbeta <- beta0 - beta.OLS
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
-zlims.var <- (0.1) * (1.1^(0:64))
+zlims.var <- (0.1) * (1.1^(0:60))
 true.model.var <- matrix(NA, length(zlims.var), length(flz))
 U.sub.var <- matrix(NA, length(zlims.var), length(flz))
 diff.var <- matrix(NA, length(zlims.var), length(flz))
@@ -117,12 +121,12 @@ par(mfrow = c(1,2))
 matplot((0:200)/200, U.size, type = "l", lty = 1,
         xlab = TeX("1-$P(\\hat{U}\\subseteq U)$"),
         ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
-legend('bottomright', col = (1:7)[-5][1:3], ncol = 1, lwd = 2, legend = labels.rec[1:3], lty = 1)
+legend('bottomright', col = (1:7)[-5][1:2], ncol = 1, lwd = 2, legend = labels.rec[1:2], lty = 1)
 
 matplot(zlims.var, part.rec , log ="x", type = "l", lty = 1,
         xlab = "Threshold on the absolute z-statistics",
         ylab = "Error", col = (1:7)[-5], lwd = 2)
-legend('bottomleft', col = (1:7)[-5][4:6], ncol = 1, lwd = 2, legend = labels.rec[4:6], lty = 1)
+legend('bottomleft', col = (1:7)[-5][3:6], ncol = 1, lwd = 2, legend = labels.rec[3:5], lty = 1)
 mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
 dev.off()
 
