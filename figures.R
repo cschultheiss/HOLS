@@ -109,16 +109,21 @@ legend('topleft', col = (1:7)[-5], lwd = 2, legend = labels.rec, lty = 1)
 dev.off()
 
 part.rec <- (length(unconf.ind) - size.var)/length(unconf.ind) + diff.var/sum(abs(dbeta))
-matplot(zlims.var, part.rec , log ="x", type = "l", lty = 1,
-        main = "Partial recovery of U", xlab = "Threshold on the absolute z-statistics",
-        ylab = "Error", col = (1:7)[-5], lwd = 2)
-legend('bottomleft', col = (1:7)[-5], ncol = 2, lwd = 2, legend = labels.rec, lty = 1)
-
+png(paste(savefolder, "/partial-rec.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
 matplot((0:200)/200, U.size, type = "l", lty = 1,
-        main = "Partial recovery of U", xlab = TeX("$P(\\hat{U}\\subseteq U)$"),
+        xlab = TeX("$P(\\hat{U}\\subseteq U)$"),
         ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
-legend('bottomright', col = (1:7)[-5], ncol = 2, lwd = 2, legend = labels.rec, lty = 1)
 
+legend('bottomright', col = (1:7)[-5][1:3], ncol = 1, lwd = 2, legend = labels.rec[1:3], lty = 1)
+
+matplot(zlims.var, part.rec , log ="x", type = "l", lty = 1,
+        xlab = "Threshold on the absolute z-statistics",
+        ylab = "Error", col = (1:7)[-5], lwd = 2)
+legend('bottomleft', col = (1:7)[-5][4:6], ncol = 1, lwd = 2, legend = labels.rec[4:6], lty = 1)
+mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
+dev.off()
 
 folder <- "results/SEM ancestor x4"
 savefolder <- "Figures/SEM ancestor x4"
