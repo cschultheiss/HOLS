@@ -130,6 +130,21 @@ legend('bottomleft', col = (1:7)[-5][3:6], ncol = 1, lwd = 2, legend = labels.re
 mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
 dev.off()
 
+png(paste(savefolder, "/avg-size.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+matplot((0:200)/200, U.size, type = "l", lty = 1,
+        xlab = TeX("1-$P(\\hat{U}\\subseteq U)$"),
+        ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
+# legend('bottomright', col = (1:7)[-5][1:2], ncol = 1, lwd = 2, legend = labels.rec[1:2], lty = 1)
+
+matplot(diff.var/sum(abs(dbeta)), size.var, type = "l", lty = 1,
+        xlab = TeX("$||\\beta^{OLS}_{\\hat{U}} - \\beta_{\\hat{U}}||_1 / ||\\beta^{OLS} - \\beta ||_1$"),
+        ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
+legend('bottomright', col = (1:7)[-5][1:5], ncol = 1, lwd = 2, legend = labels.rec[1:5], lty = 1)
+mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
+dev.off()
+
 folder <- "results/SEM ancestor x4"
 savefolder <- "Figures/SEM ancestor x4"
 
