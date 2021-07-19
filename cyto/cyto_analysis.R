@@ -40,6 +40,7 @@ cyto.plot <- function(predictor, response, env, nolog = FALSE){
   legend("topleft", legend = env, col = cols, pch = 1)
 }
 
+library(readxl)
 folder <- "Protein-signal"
 flz <- list.files(folder)
 flz2 <- character(0)
@@ -108,8 +109,11 @@ cyto.anc <- function(response, env, log = TRUE, alpha = 0.05, f  = function(x) x
 
 env.map <- c("NA", "NA", "akt", "pkc", "pip2", "mek", "NA", "pkc", "pka")
 vars <- colnames(dat)[-12]
-env <- 2
+env <- 1
 log = TRUE
+pval.lm <- matrix(NA, length(vars), length(vars))
+rownames(pval.lm) <- colnames(pval.lm) <- vars
+pval.HOLS <- pval.lm
 for (var in vars){
   cat(var)
   cat(":  ")
@@ -118,9 +122,25 @@ for (var in vars){
   cat (preds)
   cat("   ")
   if (length(preds) > 0){
+    form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
+    fit <- lm(form, data = log(dat[dat$env == 1,]))
     hc <- cyto.HOLS(preds, var, env, log = log)
     cat(" beta.OLS:", hc$beta.OLS)
-    cat(" pval: ", hc$pval)
+    # cat(" pval lm", summary(fit)$coefficients[-1, 4])
+    cat(" pval: ", hc$pval.corr)
+    pval.lm[var, preds] <- summary(fit)$coefficients[-1, 4]*length(preds)
+    pval.HOLS[var, preds] <- hc$pval.corr
   }
   cat("\n")
+}
+map(which(pval.lm < 0.05 & pval.HOLS > 0.05, arr.ind = TRUE))
+
+map <- function(mat){
+  mat2 <- mat
+  for (i in 1:nrow(mat)){
+    for (j in 1:ncol(mat)){
+      mat2[i,j] <- vars[mat[i,j]]
+    }
+  }
+  mat2
 }
