@@ -128,6 +128,8 @@ env <- 3
 log = TRUE
 all.analysis <- list()
 for (env in 1:9){
+  env.a <- env
+  if (length(env) > 1) env.a <- paste(env, collapse = ", ")
   all.analysis[[env]] <- list()
   pval.lm <- matrix(NA, length(vars), length(vars))
   rownames(pval.lm) <- colnames(pval.lm) <- vars
@@ -139,11 +141,11 @@ for (env in 1:9){
     preds <- cyto.anc(var, env, log = log)[[2]]
     preds <- preds[preds != var]
     cat (preds)
-    # cat("   ")
+    cat("   ")
     # preds <- vars[vars != var]
     if (length(preds) > 0){
       form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
-      fit <- lm(form, data = log(dat[dat$env == 1,]))
+      fit <- lm(form, data = log(dat[dat$env %in% env,]))
       hc <- cyto.HOLS(preds, var, env, log = log)
       cat(" beta.OLS:", hc$beta.OLS)
       # cat(" pval lm", summary(fit)$coefficients[-1, 4])
@@ -153,28 +155,35 @@ for (env in 1:9){
     }
     cat("\n")
   }
-  all.analysis[[env]]$pval.lm <- pval.lm
-  all.analysis[[env]]$pval.HOLS <- pval.HOLS
+  all.analysis[[env.a]]$pval.lm <- pval.lm
+  all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
 }
 
 for (env in 1:9){
   # print(env)
-  ma <- map(which(all.analysis[[env]]$pval.lm < 0.05 & all.analysis[[env]]$pval.HOLS > 0.05, arr.ind = TRUE))
+  env.a <- env
+  if (length(env) > 1) env.a <- paste(env, collapse = ", ")
+  wi <- which(all.analysis[[env.a]]$pval.lm < 0.05 & all.analysis[[env.a]]$pval.HOLS > 0.05, arr.ind = TRUE)
+  wi <- wi[order(wi[,1]), ]
+  ma <- map(wi)
   ma <- cbind(ma, character(nrow(ma)))
   colnames(ma)[3] <- "form"
   if( nrow(ma) > 0){
     for (i in 1:nrow(ma)){
-      ma[i, "form"] <- paste(latex_name(ma[i, "row"]), "~",
-                             paste(latex_name(names(which(!is.na(all.analysis[[env]]$pval.lm[ma[i, "row"],])))), collapse = " + "))
+      ma[i, "form"] <- paste(latex_name(ma[i, "row"]), "$\\sim$",
+                             paste(latex_name(names(which(!is.na(all.analysis[[env.a]]$pval.lm[ma[i, "row"],])))), collapse = " + "))
+    }
+    ma[, 1] <- latex_name(ma[,1])
+    ma[, 2] <- latex_name(ma[,2])
+    cat(paste("\\","multirow{", nrow(ma), "}{*}{", env.a, "}", sep =""))
+    for(i in 1:nrow(ma)){
+      cat(" & ")
+      cat(paste(ma[i,], collapse = " & "))
+      cat(paste("\\", "\\", sep=""))
+      cat("\n")
     }
   }
-  ma[, 1] <- latex_name(ma[,1])
-  ma[, 2] <- latex_name(ma[,2])
-  for(i in 1:nrow(ma)){
-    cat(paste(ma[i,], collapse = " & "))
-    cat(paste("\\", "\\", sep=""))
-    cat("\n")
-  }
+
   cat("\\hline")
   cat("\n")
 }
