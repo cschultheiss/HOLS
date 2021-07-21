@@ -66,6 +66,7 @@ cyto.anc <- function(response, env, log = TRUE, alpha = 0.05, f  = function(x) x
   return(list(s$coefficients[-1,4], names(which(s$coefficients[-1,4] < alpha / 10))))
 }
 
+vars <- colnames(dat)[-12]
 parents <- matrix(FALSE, length(vars), length(vars))
 rownames(parents) <- colnames(parents) <- vars
 parents["praf", c("pkc", "pka")] <- TRUE
@@ -81,25 +82,27 @@ parents["pjnk", c("pkc", "pka")] <- TRUE
 
 
 env.map <- c("NA", "NA", "akt", "pkc", "pip2", "mek", "NA", "pkc", "pka")
-vars <- colnames(dat)[-12]
-env <- 3
+
+envs <- 1:9
 log = TRUE
 all.analysis <- list()
-for (env in 1:9){
+for (env in envs){
   env.a <- env
   if (length(env) > 1) env.a <- paste(env, collapse = ", ")
   all.analysis[[env]] <- list()
   pval.lm <- matrix(NA, length(vars), length(vars))
   rownames(pval.lm) <- colnames(pval.lm) <- vars
-  pval.HOLS <- pval.lm
+  pval.HOLS <- pval.anc <- pval.lm
   for (var in vars){
     cat(var)
     cat(":  ")
     preds <- names(which(parents[var,]))
-    preds <- cyto.anc(var, env, log = log)[[2]]
-    preds <- preds[preds != var]
-    cat (preds)
-    cat("   ")
+    # ca <- cyto.anc(var, env, log = log)
+    # pval.anc[var,] <- ca[[1]]
+    # preds <- ca[[2]]
+    # preds <- preds[preds != var]
+    # cat (preds)
+    # cat("   ")
     # preds <- vars[vars != var]
     if (length(preds) > 0){
       form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
@@ -108,16 +111,46 @@ for (env in 1:9){
       cat(" beta.OLS:", hc$beta.OLS)
       # cat(" pval lm", summary(fit)$coefficients[-1, 4])
       cat(" pval: ", hc$pval.corr)
-      pval.lm[var, preds] <- summary(fit)$coefficients[-1, 4]*length(preds)
-      pval.HOLS[var, preds] <- hc$pval.corr
+      pval.lm[var, preds] <- summary(fit)$coefficients[-1, 4]
+      pval.HOLS[var, preds] <- hc$pval
     }
     cat("\n")
   }
+  diag(pval.anc) <- 1
+  # pval.max <- pmax(pval.anc, pval.lm)
+  pval.max <- pval.lm
+  pval.max.filtered <- pval.max
+  pval.max.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env.a]]$pval.lm <- pval.lm
   all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
+  all.analysis[[env.a]]$pval.anc <- pval.anc
+  all.analysis[[env.a]]$pval.max <- pval.max
+  all.analysis[[env.a]]$pval.max.filtered <- pval.max.filtered
 }
 
-for (env in 1:9){
+pas <- paste("all.analysis[[", envs, "]]$pval.max.filtered", collapse = ", ", sep = "")
+pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
+
+sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max))", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max.filtered))", sep = "", collapse = " + ")))
+pvals <- pval.min[!is.na(pval.min)]
+sums <- sums[sums.filtered > 0]
+sums.filtered <- sums.filtered[sums.filtered > 0]
+ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
+ord <- order(pvals)
+cbind(ma[ord,], pvals[ord], sums[ord], sums.filtered[ord])
+
+for (i in 1:length(sums)){
+  cat(paste(latex_name(ma[ord[i],]), collapse = " & "))
+  cat(" & ")
+  # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(paste("\\", "\\", sep=""))
+  cat("\n")
+}
+
+
+for (env in envs){
   # print(env)
   env.a <- env
   if (length(env) > 1) env.a <- paste(env, collapse = ", ")
