@@ -1,5 +1,5 @@
 library(readxl)
-source('~/Documents/ETH/PhD/HOLS/HOLS_procedure.R')
+source('~/Documents/ETH/PhD/HOLS/cyto_functions.R')
 folder <- "Protein-signal"
 flz <- list.files(folder)
 flz2 <- character(0)
@@ -25,47 +25,6 @@ for (file in flz2){
 }
 colnames(dat)[which(colnames(dat) == "p44/42")] <- "p44_42"
 
-cyto.plot <- function(predictor, response, env, log = TRUE){
-  ss <- which(dat$env %in% env)
-  cols <- 1 : length(env)
-  all.col <- numeric(length(ss))
-  for (i in 1:length(ss)){
-    all.col[i] = which(env == dat$env[ss][i])
-  }
-  x <- dat[ss, predictor][[predictor]]
-  y <- dat[ss, response][[response]]
-  if (log) {
-    x <- log(x)
-    y <- log(y)
-  }
-  plot(x, y, xlab = predictor, ylab = response,
-       main = paste(env, sep = " ", collapse = ", "), col = all.col)
-  legend("topleft", legend = env, col = cols, pch = 1, ncol = 2)
-}
-
-cyto.HOLS <- function(predictor, response, env, log = TRUE){
-  matr <- data.matrix(dat)
-  ss <- which(dat$env %in% env)
-  x <- matr[ss, predictor]
-  y <- matr[ss, response]
-  if (log) {
-    x <- log(x)
-    y <- log(y)
-  }
-  HOLS.check(x, y)
-}
-
-cyto.anc <- function(response, env, log = TRUE, alpha = 0.05, f  = function(x) x^3) {
-  ss <- which(dat$env %in% env)
-  dat3 <- dat[ss,-12]
-  if (log) {
-    dat3 <- log(dat3)
-  }
-  dat3$y3 <- f(dat3[[response]])
-  s <- summary(lm (y3 ~ ., data = dat3))
-  return(list(s$coefficients[-1,4], names(which(s$coefficients[-1,4] < alpha / 10))))
-}
-
 vars <- colnames(dat)[-12]
 parents <- matrix(FALSE, length(vars), length(vars))
 rownames(parents) <- colnames(parents) <- vars
@@ -77,13 +36,13 @@ parents["pip3", c("pip2")] <- TRUE
 parents["p44_42", c("pmek", "pka")] <- TRUE
 parents["pakts473", c("pip3", "pka")] <- TRUE
 parents["pkc", c("plcg")] <- TRUE
-parents["p38", c("pka")] <- TRUE
+parents["p38", c("pka", "pkc")] <- TRUE
 parents["pjnk", c("pkc", "pka")] <- TRUE
 
 
 env.map <- c("NA", "NA", "akt", "pkc", "pip2", "mek", "NA", "pkc", "pka")
 
-envs <- 1:9
+envs <- (1:9)[-2]
 log = TRUE
 all.analysis <- list()
 for (env in envs){
@@ -97,12 +56,12 @@ for (env in envs){
     cat(var)
     cat(":  ")
     preds <- names(which(parents[var,]))
-    # ca <- cyto.anc(var, env, log = log)
-    # pval.anc[var,] <- ca[[1]]
-    # preds <- ca[[2]]
-    # preds <- preds[preds != var]
-    # cat (preds)
-    # cat("   ")
+    ca <- cyto.anc(var, env, log = log)
+    pval.anc[var,] <- ca[[1]]
+    preds <- ca[[2]]
+    preds <- preds[preds != var]
+    cat (preds)
+    cat("   ")
     # preds <- vars[vars != var]
     if (length(preds) > 0){
       form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
@@ -117,8 +76,8 @@ for (env in envs){
     cat("\n")
   }
   diag(pval.anc) <- 1
-  # pval.max <- pmax(pval.anc, pval.lm)
-  pval.max <- pval.lm
+  pval.max <- pmax(pval.anc, pval.lm)
+  # pval.max <- pval.lm
   pval.max.filtered <- pval.max
   pval.max.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env.a]]$pval.lm <- pval.lm
@@ -141,7 +100,7 @@ ord <- order(pvals)
 cbind(ma[ord,], pvals[ord], sums[ord], sums.filtered[ord])
 
 for (i in 1:length(sums)){
-  cat(paste(latex_name(ma[ord[i],]), collapse = " & "))
+  cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
   # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
   cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
@@ -180,19 +139,4 @@ for (env in envs){
 }
 
 
-map <- function(mat){
-  if (nrow(mat) == 0) return (mat)
-  mat2 <- mat
-  for (i in 1:nrow(mat)){
-    for (j in 1:ncol(mat)){
-      mat2[i,j] <- vars[mat[i,j]]
-    }
-  }
-  mat2
-}
 
-latex_name <- function(names){
-  r_names <- c('praf', 'pmek', 'plcg', 'pip2', 'pip3', 'p44_42', 'pakts473', 'pka', 'pkc', 'p38', 'pjnk')
-  latex_names <- c('RAF', 'MEK', 'PLCg', 'PIP2', 'PIP3', 'Erk', 'Akt', 'PKA', 'PKC', 'p38', 'JNK')
-  latex_names[sapply(names, function(name) which(r_names == name))]
-}
