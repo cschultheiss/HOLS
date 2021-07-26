@@ -218,10 +218,10 @@ dev.off()
 apply(true.model, 2, mean)
 
 
-savefolder <- "Figures/Gaussian null"
-load("~/Documents/ETH/PhD/HOLS/results/Gaussian null.RData")
+savefolder <- "Figures/mix-Gauss null"
+load("~/Documents/ETH/PhD/HOLS/results/mix-Gauss null.RData")
 pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
-pval.h <- simulation$high.dim[,which(colnames(simulation$high.dim) == "pval")] 
+pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")] 
 q <- (0:100)/100
 plotfac <- 4
 pointfrac <- 0.8
@@ -244,3 +244,9 @@ qqplot(q, pval.h, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution
        ylab = "Quantiles of p-values", main = "Q-Q plot")
 abline(0, 1, col ="grey", lty = 2, lwd = 4)
 dev.off()
+
+plot.cols <- function(res, cols, pf = plot, ...){
+  pf(1:sum(colnames(res) == cols), apply(res[, which(colnames(res) == cols)], 2, mean), ...)
+}
+plot.cols(res = simulation$low.dim, cols = "beta.OLS", col = 1)
+plot.cols(res = simulation$low.dim, cols = "beta.HOLS", pf = points, col = 2)
