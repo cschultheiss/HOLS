@@ -40,10 +40,10 @@ p2 <- 30
 rho <- 0.6
 Cov <- toeplitz(rho^(seq(0, p - 1)))
 sqrt.Cov <- sqrtm(Cov)
-sel.index <- c(1, 5, 10, 15, 20)
-ind <- sel.index
+ind <- c(1, 5, 10, 15, 20)
+samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
 beta <- rep(0, p)
-beta[sel.index] <- 1
+beta[ind] <- 1
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
@@ -54,7 +54,9 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
   # Gaussian x
   # x <- mvrnorm(n, rep(0,p), Cov)
 
-  psi <- matrix(rexp(n * p, rate = sqrt(2)) * sample(c(-1,1), n * p, TRUE), nrow = n)
+  # psi <- matrix(rexp(n * p, rate = sqrt(2)) * sample(c(-1,1), n * p, TRUE), nrow = n)
+  psi <- matrix(samp.mix(n * p), nrow = n)
+  
   x <- matrix(NA, nrow = n, ncol = p)
   x[ ,1] <- psi[, 1]
   for (j in 2:p){
@@ -63,7 +65,8 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
 
   x2 <- x[, 1:p2]
   y.true <- x%*%beta
-  y <- y.true + 2 * sqrt(3 / 5) * rt(n, 5)
+  eps <- samp.mix(n)
+  y <- y.true + eps
   
   # low-dimensional
   out <- list()
