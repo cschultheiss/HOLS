@@ -231,18 +231,20 @@ png(paste(savefolder, "/low-dim.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1, 2))
 hist(pval, freq = FALSE, main = "Histogram of p-values", xlab = "p-value")
-qqplot(q, pval, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
-       ylab = "Quantiles of p-values", main = "Q-Q plot")
-abline(0, 1, col ="grey", lty = 2, lwd = 4)
+plot.ecdf(pval, xlim = c(0,1), lwd = 2, xlab = "p", ylab ="Fn(p)", main = "ECDF of p-values")
+# qqplot(q, pval, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
+#        ylab = "Quantiles of p-values", main = "Q-Q plot")
+lines(0:1, 0:1, col ="grey", lty = 2, lwd = 4)
 dev.off()
 
 png(paste(savefolder, "/high-dim.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1, 2))
 hist(pval.h, freq = FALSE, main = "Histogram of p-values", xlab = "p-value")
-qqplot(q, pval.h, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
-       ylab = "Quantiles of p-values", main = "Q-Q plot")
-abline(0, 1, col ="grey", lty = 2, lwd = 4)
+plot.ecdf(pval.h, xlim = c(0,1), lwd = 2, xlab = "p", ylab ="Fn(p)", main = "ECDF of p-values")
+# qqplot(q, pval.h, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
+#        ylab = "Quantiles of p-values", main = "Q-Q plot")
+lines(0:1, 0:1, col ="grey", lty = 2, lwd = 4)
 dev.off()
 
 plot.cols <- function(res, cols, pf = plot, ...){
