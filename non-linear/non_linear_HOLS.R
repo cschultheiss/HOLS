@@ -1,24 +1,58 @@
 require(mgcv)
+require(sfsmisc)
 pot <- function(x, p) sign(x)*abs(x)^p
-n <- 1e5
+n <- 1e4
 ind <- sample.int(n, min(1e4, n))
 x1 <- rnorm(n)
 eps <- rnorm(n)
 x2 <- x1 + eps
 x3 <- x2 + rnorm(n)
-y <- pot(x1, 1.2) + pot(x3, 1.2) + 0.5 * rnorm(n)
-fity <- gam(y ~ s(x2) + s(x3))
-epst <- fity$residuals
-fit2 <- gam(x2 ~ s(x3))
-z2 <- fit2$residuals
-fit3 <- gam(x3 ~ s(x2))
-z3 <- fit3$residuals
-
-c2 <- cor(z2^2, epst^2)
-c3 <- cor(z3^2, epst^2)
-pv(c2, n)
-pv(c3, n)
+x <- cbind(x1, x2, x3)
+y <- pot(x1, 1.5) + pot(x3, 1.5) + 0.5 * rnorm(n)
 
 
+nodewise.check <- function(x, y, pval.func = pval.sqcorr) {
+  if (is.vector(x)) x <- matrix(x, ncol = 1)
+  n <- dim(x)[1]
+  p <- dim(x)[2]
+  if (length(y) != n) stop("Dimensions do not match")
+  colnames(x)[which(colnames(x) == "y")] = "y.new"
+  xy <- data.frame(x, y)
+  form.y <- wrapFormula(y ~ ., data = xy)
+  fits <- list()
+  fits[["y"]] <- gam(form.y, data = xy)
+  eps <- fits[["y"]]$residuals
+  if (p > 1) {
+    x <- data.frame(x)
+    z <- matrix(NA, n, p)
+    for (j in 1:p) {
+      form.j <- wrapFormula(eval(parse(text = paste(colnames(x)[j], "~."))), data = x)
+      fits[[colnames(x)[j]]] <- gam(form.j, data = x)
+      z[, j] <- fits[[colnames(x)[j]]]$residuals
+    }
+  } else {
+    z <- x
+  }
+  pvals <- pval.func(z, eps)
+  names(pvals) <- colnames(x)
+  structure(list(pvals = pvals, fits = fits), class = "nodewise.check")
+}
+
+print.nodewise.check <- function(out)
+pval.sqcorr <- function(z, eps){
+  if (is.vector(z)) z <- matrix(z, ncol = 1)
+  n <- length(eps)
+  co <- cor(z^2, eps^2)[, 1]
+  pv(co, n)
+}
 traf <- function(co) 0.5*log((1+co)/(1-co))
 pv <- function(co, n) 2 * pnorm(abs(traf(co))/sqrt(1/(n-3)), lower.tail = FALSE)
+
+pval.mean <- function(z, eps) {
+  if (is.vector(z)) z <- matrix(z, ncol = 1)
+  n <- length(eps)
+  z.eps <- z * (eps^2)
+  mm <- apply(z.eps, 2, mean)
+  sd <- apply(z.eps, 2, sd)
+  pv <- 2 * pnorm(abs(mm) / sd / sqrt(n), lower.tail = FALSE)
+}
