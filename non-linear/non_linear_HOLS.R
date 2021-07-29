@@ -33,17 +33,25 @@ nodewise.check <- function(x, y, pval.func = pval.sqcorr) {
   } else {
     z <- x
   }
-  pvals <- pval.func(z, eps)
-  names(pvals) <- colnames(x)
-  structure(list(pvals = pvals, fits = fits), class = "nodewise.check")
+  pval.out <- pval.func(z, eps)
+  pvals <- pval.out$pvals
+  stat <- pval.out$stat
+  names(pvals) <- names(stat) <- colnames(x)
+  structure(list(pvals = pvals, stat = stat, fits = fits), class = "nodewise.check")
 }
 
-print.nodewise.check <- function(out)
+print.nodewise.check <- function(out){
+  cat("p-values \n")
+  print(out$pvals)
+  cat("Test statistics \n")
+  print(out$stat)
+}
 pval.sqcorr <- function(z, eps){
   if (is.vector(z)) z <- matrix(z, ncol = 1)
   n <- length(eps)
   co <- cor(z^2, eps^2)[, 1]
-  pv(co, n)
+  pvals <- pv(co, n)
+  list(pvals = pvals, stat = co)
 }
 traf <- function(co) 0.5*log((1+co)/(1-co))
 pv <- function(co, n) 2 * pnorm(abs(traf(co))/sqrt(1/(n-3)), lower.tail = FALSE)
