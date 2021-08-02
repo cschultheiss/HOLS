@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/SEM missing x3"
-savefolder <- "Figures/SEM missing x3"
+folder <- "results/02-Aug-2021 16.07"
+savefolder <- "results/02-Aug-2021 16.07"
 flz <- list.files(folder)
 
 
@@ -12,12 +12,15 @@ for (file in flz) {
   if (j == 1) {
     p <- sum(colnames(simulation$low.dim) == "beta.OLS")
     zs <- matrix(NA, length(flz), p + 1)
+    zsc <- matrix(NA, length(flz), p + 1)
   }
   zs[j, 1] <- simulation$n
+  zsc[j, 1] <- simulation$n
   zs[j, -1] <- apply(abs(simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.HOLS")] - 
                            simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
                        simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
                        simulation$low.dim[,"sigma.hat"], 2, mean)
+  zsc[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")]))*sqrt(simulation$n - 3), 2, mean)
   
 }
 
@@ -53,8 +56,11 @@ beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
 dbeta <- beta0 - beta.OLS
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
+max.unconfc <- matrix(NA, 200, length(flz))
+min.confc <- matrix(NA, 200, length(flz)) 
 zlims.var <- (0.1) * (1.1^(0:60))
 true.model.var <- matrix(NA, length(zlims.var), length(flz))
+true.model.varc <- matrix(NA, length(zlims.var), length(flz))
 U.sub.var <- matrix(NA, length(zlims.var), length(flz))
 diff.var <- matrix(NA, length(zlims.var), length(flz))
 diff.U <- numeric(length(flz))
@@ -68,6 +74,7 @@ for (file in flz) {
                  simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
     simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
     simulation$low.dim[,"sigma.hat"]
+  all.zc <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")])) * sqrt(simulation$n - 3)
   all.OLS <- simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]
   all.diff <- t(t(all.OLS) - beta0)
   diff.U[j] <- mean(all.diff[,unconf.ind]^2)
@@ -81,7 +88,10 @@ for (file in flz) {
   }
   min.conf[, j] <- apply(all.z[, conf.ind], 1, min)
   max.unconf[, j] <- apply(all.z[, unconf.ind], 1, max)
+  min.confc[, j] <- apply(all.zc[, conf.ind], 1, min)
+  max.unconfc[, j] <- apply(all.zc[, unconf.ind], 1, max)
   true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
+  true.model.varc[, j] <- sapply(zlims.var, function(x) mean((x > max.unconfc[,j]) & (x < min.confc[,j]))) 
   U.sub.var[, j] <- sapply(zlims.var, function(x) mean((x < min.conf[,j]))) 
   
   k <- 0
