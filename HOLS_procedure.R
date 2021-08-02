@@ -152,3 +152,5 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
   }
   return(out)
 }
+
+traf <- function(co) 0.5*log((1+co)/(1-co))
