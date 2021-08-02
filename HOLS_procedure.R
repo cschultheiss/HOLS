@@ -146,5 +146,9 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
       out$pval.glob.sim <- 1 - ecdf(frac.null)(chisq.stat)
     }
   }
+  if (TRUE){
+    eps.t <- y - x %*% beta.OLS
+    out$corrs <- cor(z^2, eps.t^2)
+  }
   return(out)
 }
