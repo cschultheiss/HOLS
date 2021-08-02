@@ -148,7 +148,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
   }
   if (TRUE){
     eps.t <- y - x %*% beta.OLS
-    out$corrs <- cor(z^2, eps.t^2)
+    out$corrs <- cor(abs(z), abs(eps.t))
   }
   return(out)
 }
