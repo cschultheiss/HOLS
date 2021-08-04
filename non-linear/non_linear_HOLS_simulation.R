@@ -61,7 +61,7 @@ for (n in n.vec) {
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc"), .options.snow = opts) %dorng%{
+               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc", "dHSIC"), .options.snow = opts) %dorng%{
                  # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
                  x1 <- rnorm(n)
                  x2 <- sqrt(0.5) * pot(x1, 1.1) / sqrt(var) + sqrt(0.5) * rnorm(n)
@@ -76,12 +76,12 @@ for (n in n.vec) {
                  
                  x.sub <- x[, -3]
                  
-                 nw <- nodewise.check(x.sub, y)
+                 nw <- nodewise.check(x.sub, y, pval.func = c(pval.sqcorr, pval.dhsic))
                  
                  out <- list()
                  
                  # low-dimensional
-                 out$low.dim <- list(pvals = nw$pvals, stat = nw$stat)
+                 out$low.dim <- nw$pval.out
                  
                  out                           
                }
@@ -89,7 +89,9 @@ for (n in n.vec) {
   stopCluster(cl)
   
   res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
-  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2))
+  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2),
+                         rep("p.value.hsic", p2), rep("stat.hsic", p2),
+                         rep("crit.hsic", p2))
 
   
   simulation <- list(low.dim = res.low, # high.dim = res.high,
@@ -99,5 +101,7 @@ for (n in n.vec) {
   
   print(apply(simulation$low.dim[, 1:p2], 2, median))
   print(apply(simulation$low.dim[, (p2 + 1):(2 * p2)], 2, mean))
+  print(apply(simulation$low.dim[, (2 * p2 + 1):(3 * p2)], 2, median))
+  print(apply(simulation$low.dim[, (3 * p2 + 1):(4 * p2)], 2, mean))
 }
 
