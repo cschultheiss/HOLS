@@ -1,6 +1,6 @@
 require(latex2exp)
 
-folder <- "results/29-Jul-2021 09.43"
+folder <- "results/04-Aug-2021 11.59"
 savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
 
@@ -10,13 +10,13 @@ for (file in flz) {
   load(paste(folder, "/", file, sep = ""))
   if (j == 1) {
     p <- sum(colnames(simulation$low.dim) == "p.value")
-    stats <- matrix(NA, length(flz), p + 1)
+    stats <- stats.alt <- matrix(NA, length(flz), p + 1)
   }
-  stats[j, 1] <- simulation$n
-  stats[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])), 2, mean) *
-    sqrt(simulation$n-3)
-  # stats[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")], 2, median)
-  
+  stats[j, 1] <- stats.alt[j, 1] <- simulation$n
+  # stats[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])), 2, mean) *
+  #   sqrt(simulation$n-3)
+  stats[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")], 2, median)
+  stats.alt[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hsic")], 2, median)
 }
 
 conf.ind <-  2:3
@@ -24,23 +24,31 @@ unconf.ind <- (1:5)[-conf.ind]
 
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
-statlims.var <- 1e-5 * 1.3^(0:40)
-statlims.var <- (0.1) * (1.1^(0:60))
+max.unconf.alt <- matrix(NA, 200, length(flz))
+min.conf.alt <- matrix(NA, 200, length(flz)) 
+statlims.var <- -log(1e-18 * 2^(0:60))
+# statlims.var <- (0.1) * (1.1^(0:60))
 true.model.var <- matrix(NA, length(statlims.var), length(flz))
 U.sub.var <- matrix(NA, length(statlims.var), length(flz))
+true.model.var.alt <- matrix(NA, length(statlims.var), length(flz))
+U.sub.var.alt <- matrix(NA, length(statlims.var), length(flz))
 diff.var <- matrix(NA, length(statlims.var), length(flz))
 diff.U <- numeric(length(flz))
 size.var <- matrix(NA, length(statlims.var), length(flz))
 U.size <- matrix(NA, 200 + 1, length(flz))
+U.size.alt <- matrix(NA, 200 + 1, length(flz))
 j <- 0
 for (file in flz) {
   j <- j + 1
   load(paste(folder, "/", file, sep = ""))
-  all.stat <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])) * sqrt(simulation$n - 3)
+  # all.stat <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])) * sqrt(simulation$n - 3)
+  all.stat <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")])
+  all.stat.alt <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hsic")])
   k <- 0
   for (lim in statlims.var){
     k <- k + 1
     which.selected <- apply(all.stat < lim, 1, which)
+    which.selected.alt <- apply(all.stat.alt < lim, 1, which)
     if(is.vector(which.selected) && length(which.selected) == 0) {
       size.var[k, j] <- 0
     } else {
@@ -49,16 +57,21 @@ for (file in flz) {
     }
   }
   min.conf[, j] <- apply(all.stat[, conf.ind], 1, min)
+  min.conf.alt[, j] <- apply(all.stat.alt[, conf.ind], 1, min)
   # min.conf[, j] <- all.stat[, 3]
   max.unconf[, j] <- apply(all.stat[, unconf.ind], 1, max)
+  max.unconf.alt[, j] <- apply(all.stat.alt[, unconf.ind], 1, max)
   true.model.var[, j] <- sapply(statlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
+  true.model.var.alt[, j] <- sapply(statlims.var, function(x) mean((x > max.unconf.alt[,j]) & (x < min.conf.alt[,j]))) 
   U.sub.var[, j] <- sapply(statlims.var, function(x) mean((x < min.conf[,j]))) 
+  U.sub.var.alt[, j] <- sapply(statlims.var, function(x) mean((x < min.conf.alt[,j]))) 
   
   k <- 0
   stat.min <- apply(all.stat[,conf.ind], 1, min)
   for (thresh in c(sort(stat.min), Inf)){
     k <- k + 1
     U.size[k, j] <- mean(apply(all.stat[,unconf.ind] <= thresh - 1e-6, 1, sum))
+    U.size.alt[k, j] <- mean(apply(all.stat.alt[,unconf.ind] <= thresh - 1e-6, 1, sum))
   }
 }
 
