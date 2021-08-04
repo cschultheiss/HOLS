@@ -1,15 +1,7 @@
 require(mgcv)
 require(sfsmisc)
+require(dHSIC)
 pot <- function(x, p) sign(x)*abs(x)^p
-n <- 1e4
-ind <- sample.int(n, min(1e4, n))
-x1 <- rnorm(n)
-eps <- rnorm(n)
-x2 <- x1 + eps
-x3 <- x2 + rnorm(n)
-x <- cbind(x1, x2, x3)
-y <- pot(x1, 1.5) + pot(x3, 1.5) + 0.5 * rnorm(n)
-
 
 nodewise.check <- function(x, y, pval.func = pval.sqcorr) {
   if (is.vector(x)) x <- matrix(x, ncol = 1)
@@ -33,19 +25,48 @@ nodewise.check <- function(x, y, pval.func = pval.sqcorr) {
   } else {
     z <- x
   }
-  pval.out <- pval.func(z, eps)
-  pvals <- pval.out$pvals
-  stat <- pval.out$stat
-  names(pvals) <- names(stat) <- colnames(x)
-  structure(list(pvals = pvals, stat = stat, fits = fits), class = "nodewise.check")
+  if (length(pval.func) == 1) {
+    pval.out <- pval.func(z, eps)
+    for (i in 1:length(pval.out)) names(pval.out[[i]]) <- colnames(x)
+    structure(list(pval.out = pval.out, fits = fits), class = "nodewise.check")
+  } else {
+    pval.out <- list()
+    for (f in 1:length(pval.func)) {
+      pval.out[[f]] <- do.call(pval.func[[f]], list(z, eps))
+      for (i in 1:length(pval.out[[f]])) names(pval.out[[f]][[i]]) <- colnames(x)
+    }
+    structure(list(pval.out = pval.out, fits = fits), class = "nodewise.check")
+  }
 }
 
 print.nodewise.check <- function(out){
-  cat("p-values \n")
-  print(out$pvals)
-  cat("Test statistics \n")
-  print(out$stat)
+  if("pvals" %in% names(out$pval.out)){
+    cat("p-values \n")
+    print(out$pval.out$pvals)
+    cat("Test statistics \n")
+    print(out$pval.out$stat)
+    for (name in names(out$pval.out)){
+      if (! name %in% c("pvals", "stat")){
+        cat(name, "\n")
+        print(out$pval.out[[name]])
+      }
+    }
+  } else {
+    for (i in 1:length(out$pval.out)) {
+      cat("p-values \n")
+      print(out$pval.out[[i]]$pvals)
+      cat("Test statistics \n")
+      print(out$pval.out[[i]]$stat)
+      for (name in names(out$pval.out[[i]])){
+        if (! name %in% c("pvals", "stat")){
+          cat(name, "\n")
+          print(out$pval.out[[i]][[name]])
+        }
+      }
+    }
+  }
 }
+
 pval.sqcorr <- function(z, eps){
   if (is.vector(z)) z <- matrix(z, ncol = 1)
   n <- length(eps)
@@ -64,3 +85,20 @@ pval.mean <- function(z, eps) {
   sd <- apply(z.eps, 2, sd)
   pv <- 2 * pnorm(abs(mm) / sd / sqrt(n), lower.tail = FALSE)
 }
+
+pval.dhsic <- function(z, eps) {
+  if (is.vector(z)) z <- matrix(z, ncol = 1)
+  n <- length(eps)
+  p <- ncol(z)
+  pvals <- numeric(p)
+  stat <- numeric(p)
+  crit <- numeric(p)
+  for (j in 1:p){
+    test.j <- dhsic.test(z[, j], eps, method = "gamma")
+    pvals[j] <- test.j$p.value
+    stat[j] <-test.j$statistic
+    crit[j] <-test.j$crit.value
+  }
+  list(pvals = pvals, stat = stat, crit = crit)
+}
+
