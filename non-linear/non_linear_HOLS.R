@@ -1,6 +1,7 @@
 require(mgcv)
 require(sfsmisc)
 require(dHSIC)
+require(HHG)
 pot <- function(x, p) sign(x)*abs(x)^p
 
 nodewise.check <- function(x, y, pval.func = pval.sqcorr) {
@@ -102,3 +103,17 @@ pval.dhsic <- function(z, eps) {
   list(pvals = pvals, stat = stat, crit = crit)
 }
 
+pval.hhg <- function(z, eps) {
+  if (is.vector(z)) z <- matrix(z, ncol = 1)
+  n <- length(eps)
+  p <- ncol(z)
+  pvals <- numeric(p)
+  stat <- numeric(p)
+  nt <- Fast.independence.test.nulltable(n)
+  for (j in 1:p){
+    Fit <- Fast.independence.test(z[,j], eps, NullTable = nt)
+    pvals[j] <- Fit$MinP.pvalue
+    stat[j] <- Fit$MinP
+  }
+  list(pvals = pvals, stat = stat)
+}
