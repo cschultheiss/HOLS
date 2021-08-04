@@ -1,6 +1,6 @@
 require(latex2exp)
 
-folder <- "results/04-Aug-2021 11.59"
+folder <- "results/04-Aug-2021 16.50"
 savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
 
@@ -16,7 +16,7 @@ for (file in flz) {
   # stats[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])), 2, mean) *
   #   sqrt(simulation$n-3)
   stats[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")], 2, median)
-  stats.alt[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hsic")], 2, median)
+  stats.alt[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hhg")], 2, median)
 }
 
 conf.ind <-  2:3
@@ -43,7 +43,7 @@ for (file in flz) {
   load(paste(folder, "/", file, sep = ""))
   # all.stat <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])) * sqrt(simulation$n - 3)
   all.stat <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")])
-  all.stat.alt <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hsic")])
+  all.stat.alt <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hhg")])
   k <- 0
   for (lim in statlims.var){
     k <- k + 1
