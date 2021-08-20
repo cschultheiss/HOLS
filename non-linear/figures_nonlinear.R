@@ -1,6 +1,6 @@
 require(latex2exp)
 
-folder <- "results/04-Aug-2021 16.50"
+folder <- "results/20-Aug-2021 15.28"
 savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
 
@@ -19,8 +19,8 @@ for (file in flz) {
   stats.alt[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hhg")], 2, median)
 }
 
-conf.ind <-  2:3
-unconf.ind <- (1:5)[-conf.ind]
+conf.ind <-  1
+unconf.ind <- 2:3
 
 max.unconf <- matrix(NA, 200, length(flz))
 min.conf <- matrix(NA, 200, length(flz)) 
@@ -56,8 +56,8 @@ for (file in flz) {
       size.var[k ,j] <- mean(sapply(which.selected, function(ws) sum(unconf.ind %in% ws)))
     }
   }
-  min.conf[, j] <- apply(all.stat[, conf.ind], 1, min)
-  min.conf.alt[, j] <- apply(all.stat.alt[, conf.ind], 1, min)
+  min.conf[, j] <- apply(matrix(all.stat[, conf.ind], ncol = length(conf.ind)), 1, min)
+  min.conf.alt[, j] <- apply(matrix(all.stat.alt[, conf.ind], ncol = length(conf.ind)), 1, min)
   # min.conf[, j] <- all.stat[, 3]
   max.unconf[, j] <- apply(all.stat[, unconf.ind], 1, max)
   max.unconf.alt[, j] <- apply(all.stat.alt[, unconf.ind], 1, max)
@@ -67,7 +67,7 @@ for (file in flz) {
   U.sub.var.alt[, j] <- sapply(statlims.var, function(x) mean((x < min.conf.alt[,j]))) 
   
   k <- 0
-  stat.min <- apply(all.stat[,conf.ind], 1, min)
+  stat.min <- apply(matrix(all.stat[,conf.ind], ncol = length(conf.ind)), 1, min)
   for (thresh in c(sort(stat.min), Inf)){
     k <- k + 1
     U.size[k, j] <- mean(apply(all.stat[,unconf.ind] <= thresh - 1e-6, 1, sum))
@@ -75,7 +75,7 @@ for (file in flz) {
   }
 }
 
-var.ind <- 1:5
+var.ind <- 1:3
 pp <- length(var.ind)
 var.ind.label <- (1:6)[-3]
 labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind.label, "}$')", sep = "", collapse = ","), ")")))
