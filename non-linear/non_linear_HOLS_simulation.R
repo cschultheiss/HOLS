@@ -41,8 +41,8 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
-p <- 6
-p2 <- 5
+p <- 3
+p2 <- 3
 var <- 1.080588
 
 
@@ -63,20 +63,27 @@ for (n in n.vec) {
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc", "dHSIC", "HHG"), .options.snow = opts) %dorng%{
                  # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
-                 x1 <- rnorm(n)
-                 x2 <- sqrt(0.5) * pot(x1, 1.1) / sqrt(var) + sqrt(0.5) * rnorm(n)
+                 H <- rnorm(n)
+                 x1 <- sqrt(0.8) * as.vector(scale(pot(H, 1.5))) + sqrt(0.2) * rnorm(n)
+                 x2 <- sqrt(0.8) * as.vector(scale(pot(x1, 1.5))) + sqrt(0.2) * rnorm(n)
                  x3 <- rnorm(n)
-                 x4 <- (0.5 * pot(x2, 1.1) + 0.5 * pot(x3, 1.1))/sqrt(var) + sqrt(0.5) * rnorm(n)
-                 x5 <- rnorm(n)
-                 x6 <- (0.5 * pot(x4, 1.1) + 0.5 * pot(x5, 1.1))/sqrt(var) + sqrt(0.5) * rnorm(n)
+                 y <- sqrt(0.8) * as.vector(scale(sin(H) + sin(x2) + sin(x3))) + sqrt(0.2) * rnorm(n)
+                 
+                 
+                 # x1 <- rnorm(n)
+                 # x2 <- sqrt(0.5) * pot(x1, 1.1) / sqrt(var) + sqrt(0.5) * rnorm(n)
+                 # x3 <- rnorm(n)
+                 # x4 <- (0.5 * pot(x2, 1.1) + 0.5 * pot(x3, 1.1))/sqrt(var) + sqrt(0.5) * rnorm(n)
+                 # x5 <- rnorm(n)
+                 # x6 <- (0.5 * pot(x4, 1.1) + 0.5 * pot(x5, 1.1))/sqrt(var) + sqrt(0.5) * rnorm(n)
 
                  x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
                  
-                 y <- pot(x3, 1.1) / sqrt(var)
+                 # y <- pot(x3, 1.1) / sqrt(var)
+                 # 
+                 # x.sub <- x[, -3]
                  
-                 x.sub <- x[, -3]
-                 
-                 nw <- nodewise.check(x.sub, y, pval.func = c(pval.sqcorr, pval.hhg))
+                 nw <- nodewise.check(x, y, pval.func = c(pval.sqcorr, pval.hhg))
                  
                  out <- list()
                  
