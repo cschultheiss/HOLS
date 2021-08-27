@@ -207,21 +207,21 @@ for (file in flz) {
   good.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.bad[,j]) & (x < max.good[,j]))) 
 }
 
-labels <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:7, "$')", sep = "", collapse = ","), ")")))
+labels <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
 
 png(paste(savefolder, "/thresh-z.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow=c(1,2))
 par(xpd=TRUE)
-matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
-        main = "Selecting all ancestors", xlab = "Threshold on the absolute z-statistics",
-        ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
+matplot(zlims.var, true.model.var[,1:5], lty = 1, type = "l", log = "x",
+        main = "Selecting the full true model", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
 legend('topleft', inset = -0.05, col = 1:3, lwd = 2, legend = labels[1:3], lty = 1)
 
-matplot(zlims.var, good.model.var, lty = 1, type = "l", log = "x",
-        main = "Selecting any ancestor", xlab = "Threshold on the absolute z-statistics",
-        ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
-legend('topleft', inset = -0.05, col = c(4, 6, 7), lwd = 2, legend = labels[4:6], lty = 1)
+matplot(zlims.var, good.model.var[,1:5], lty = 1, type = "l", log = "x",
+        main = "Selecting any true model", xlab = "Threshold on the absolute z-statistics",
+        ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
+legend('topleft', inset = -0.05, col = c(4, 6), lwd = 2, legend = labels[4:5], lty = 1)
 par(xpd=FALSE)
 dev.off()
 
