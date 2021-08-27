@@ -13,9 +13,9 @@ for (file in flz) {
     stats <- stats.alt <- matrix(NA, length(flz), p + 1)
   }
   stats[j, 1] <- stats.alt[j, 1] <- simulation$n
-  # stats[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])), 2, mean) *
-  #   sqrt(simulation$n-3)
-  stats[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")], 2, median)
+  stats[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])), 2, median) *
+    sqrt(simulation$n-3)
+  # stats[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")], 2, median)
   stats.alt[j, -1] <- apply(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hhg")], 2, median)
 }
 
@@ -27,7 +27,7 @@ min.conf <- matrix(NA, 200, length(flz))
 max.unconf.alt <- matrix(NA, 200, length(flz))
 min.conf.alt <- matrix(NA, 200, length(flz)) 
 statlims.var <- -log(1e-18 * 2^(0:60))
-# statlims.var <- (0.1) * (1.1^(0:60))
+statlims.var <- (0.1) * (1.1^(0:60))
 true.model.var <- matrix(NA, length(statlims.var), length(flz))
 U.sub.var <- matrix(NA, length(statlims.var), length(flz))
 true.model.var.alt <- matrix(NA, length(statlims.var), length(flz))
@@ -41,8 +41,9 @@ j <- 0
 for (file in flz) {
   j <- j + 1
   load(paste(folder, "/", file, sep = ""))
-  # all.stat <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])) * sqrt(simulation$n - 3)
-  all.stat <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")])
+  all.stat <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "stat")])) * sqrt(simulation$n - 3)
+  # all.stat <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")]) 
+  # all.stat <- qnorm(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value")]/2, lower.tail = FALSE)
   all.stat.alt <- -log(simulation$low.dim[,which(colnames(simulation$low.dim) == "p.value.hhg")])
   k <- 0
   for (lim in statlims.var){
@@ -91,7 +92,7 @@ legend("topleft", inset = c(0, -0), ncol = 3, legend = labels[ord][1:pp],
        pch = (1:pp)[ord], col = (1:7)[-5][ord], pt.lwd = 2)
 
 par(xpd = FALSE)
-which.line <- (2:3)
+which.line <- (1:2)
 for (j in which.line){
   lines(stats[, 1], sqrt(stats[, 1]) * stats[4, j + 1] / sqrt(stats[4, 1]), lty = 2)
 }
