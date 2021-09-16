@@ -1,7 +1,7 @@
 require(latex2exp)
 
-folder <- "results/SEM missing x3"
-savefolder <- "Figures/SEM missing x3"
+folder <- "results/Gaussian eps_x2"
+savefolder <- "Figures/Gaussian eps_x"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+07", str)
 flz <- flz[which(!sapply(flz, grepf))]
@@ -26,9 +26,9 @@ for (file in flz) {
 }
 
 # var.ind <- c(1, 7, 9, 13, 14, 20, 22, 26)
-var.ind <- 1:6
+var.ind <- 13:17
 pp <- length(var.ind)
-var.ind.label <- (1:7)[-3]
+var.ind.label <- 13:17
 # nmat <- matrix(rep(zs[,1], p), ncol = p)
 # alln <- nmat[,1]
 # scat <- seq(0.95, 1.05, 0.02)
@@ -44,12 +44,12 @@ cx <- 0.75
 
 
 
-conf.ind <- conf.ind <- 2:3
-unconf.ind <- (1:6)[-conf.ind]
-beta0 <- rep(0, 6)
-beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
-# beta0 <- rep(0, 30)
-# beta.OLS <- c(rep(0, 13), -0.3487806,  0.7905694, -0.3487806, rep(0, 14))
+conf.ind <- 14:16
+unconf.ind <- (1:30)[-conf.ind]
+# beta0 <- rep(0, 6)
+# beta.OLS <- sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0)
+beta0 <- rep(0, 30)
+beta.OLS <- c(rep(0, 13), -0.3487806,  0.7905694, -0.3487806, rep(0, 14))
 # beta0 <- rep(0, 26)
 # beta.OLS <- c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
 #               -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
@@ -115,7 +115,7 @@ matplot(zs[, 1], zs[, var.ind + 1], log ="xy", xlab = "n",
 legend("topleft", inset = c(0, -0), ncol = 3, legend = labels[ord][1:pp],
        pch = (1:pp)[ord], col = (1:7)[-5][ord], pt.lwd = 2)
 par(xpd = FALSE)
-which.line <- (2:3)
+which.line <- (14:15)
 for (j in which.line){
   lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
 }
