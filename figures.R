@@ -159,6 +159,8 @@ folder <- "results/SEM ancestor x4"
 savefolder <- "Figures/SEM ancestor x4"
 
 flz <- list.files(folder)
+grepf <- function(str) grepl("+07", str)
+flz <- flz[which(!sapply(flz, grepf))]
 
 
 j <- 0
@@ -213,15 +215,15 @@ png(paste(savefolder, "/thresh-z.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow=c(1,2))
 par(xpd=TRUE)
-matplot(zlims.var, true.model.var[,1:5], lty = 1, type = "l", log = "x",
+matplot(zlims.var, true.model.var[,1:5], lty = 1:5, type = "l", log = "x",
         main = "Selecting the full true model", xlab = "Threshold on the absolute z-statistics",
         ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
-legend('topleft', inset = -0.05, col = 1:3, lwd = 2, legend = labels[1:3], lty = 1)
+legend('topleft', inset = -0.05, col = 1:3, lwd = 2, legend = labels[1:3], lty = 1:3)
 
-matplot(zlims.var, good.model.var[,1:5], lty = 1, type = "l", log = "x",
+matplot(zlims.var, good.model.var[,1:5], lty = 1:5, type = "l", log = "x",
         main = "Selecting any true model", xlab = "Threshold on the absolute z-statistics",
         ylab = "Empirical probability", col = (1:6)[-5], lwd = 2)
-legend('topleft', inset = -0.05, col = c(4, 6), lwd = 2, legend = labels[4:5], lty = 1)
+legend('topleft', inset = -0.05, col = c(4, 6), lwd = 2, legend = labels[4:5], lty = 4:5)
 par(xpd=FALSE)
 dev.off()
 
