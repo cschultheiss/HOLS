@@ -1,9 +1,10 @@
 require(latex2exp)
 
-folder <- "results/02-Aug-2021 16.07"
-savefolder <- "results/02-Aug-2021 16.07"
+folder <- "results/SEM missing x3"
+savefolder <- "Figures/SEM missing x3"
 flz <- list.files(folder)
-
+grepf <- function(str) grepl("+07", str)
+flz <- flz[which(!sapply(flz, grepf))]
 
 j <- 0
 for (file in flz) {
@@ -12,15 +13,15 @@ for (file in flz) {
   if (j == 1) {
     p <- sum(colnames(simulation$low.dim) == "beta.OLS")
     zs <- matrix(NA, length(flz), p + 1)
-    zsc <- matrix(NA, length(flz), p + 1)
+    # zsc <- matrix(NA, length(flz), p + 1)
   }
   zs[j, 1] <- simulation$n
-  zsc[j, 1] <- simulation$n
+  # zsc[j, 1] <- simulation$n
   zs[j, -1] <- apply(abs(simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.HOLS")] - 
                            simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
                        simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
                        simulation$low.dim[,"sigma.hat"], 2, mean)
-  zsc[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")]))*sqrt(simulation$n - 3), 2, mean)
+  # zsc[j, -1] <- apply(abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")]))*sqrt(simulation$n - 3), 2, mean)
   
 }
 
@@ -74,7 +75,7 @@ for (file in flz) {
                  simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
     simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
     simulation$low.dim[,"sigma.hat"]
-  all.zc <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")])) * sqrt(simulation$n - 3)
+  # all.zc <- abs(traf(simulation$low.dim[,which(colnames(simulation$low.dim) == "corrs")])) * sqrt(simulation$n - 3)
   all.OLS <- simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]
   all.diff <- t(t(all.OLS) - beta0)
   diff.U[j] <- mean(all.diff[,unconf.ind]^2)
@@ -88,10 +89,10 @@ for (file in flz) {
   }
   min.conf[, j] <- apply(all.z[, conf.ind], 1, min)
   max.unconf[, j] <- apply(all.z[, unconf.ind], 1, max)
-  min.confc[, j] <- apply(all.zc[, conf.ind], 1, min)
-  max.unconfc[, j] <- apply(all.zc[, unconf.ind], 1, max)
-  true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j]))) 
-  true.model.varc[, j] <- sapply(zlims.var, function(x) mean((x > max.unconfc[,j]) & (x < min.confc[,j]))) 
+  true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j])))
+  # min.confc[, j] <- apply(all.zc[, conf.ind], 1, min)
+  # max.unconfc[, j] <- apply(all.zc[, unconf.ind], 1, max)
+  # true.model.varc[, j] <- sapply(zlims.var, function(x) mean((x > max.unconfc[,j]) & (x < min.confc[,j]))) 
   U.sub.var[, j] <- sapply(zlims.var, function(x) mean((x < min.conf[,j]))) 
   
   k <- 0
@@ -118,10 +119,10 @@ which.line <- (2:3)
 for (j in which.line){
   lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
 }
-matplot(zlims.var, true.model.var, lty = 1, type = "l", log = "x",
+matplot(zlims.var, true.model.var, lty = 1:5, type = "l", log = "x",
         main = "Perfect recovery of U", xlab = "Threshold on the absolute z-statistics",
         ylab = "Empirical probability", col = (1:7)[-5], lwd = 2)
-legend('topleft', col = (1:7)[-5], lwd = 2, legend = labels.rec, lty = 1)
+legend('topleft', col = (1:7)[-5], lwd = 2, legend = labels.rec, lty = 1:5)
 dev.off()
 
 part.rec <- (length(unconf.ind) - size.var)/length(unconf.ind) + diff.var/sum(abs(dbeta))
@@ -143,15 +144,15 @@ dev.off()
 png(paste(savefolder, "/avg-size.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
-matplot((0:200)/200, U.size, type = "l", lty = 1,
+matplot((0:200)/200, U.size, type = "l", lty = 1:5,
         xlab = TeX("1-$P(\\hat{U}\\subseteq U)$"),
         ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
 # legend('bottomright', col = (1:7)[-5][1:2], ncol = 1, lwd = 2, legend = labels.rec[1:2], lty = 1)
 
-matplot(diff.var/sum(abs(dbeta)), size.var, type = "l", lty = 1,
+matplot(diff.var/sum(abs(dbeta)), size.var, type = "l", lty = 1:5,
         xlab = TeX("$||\\beta^{OLS}_{\\hat{U}} - \\beta_{\\hat{U}}||_1 / ||\\beta^{OLS} - \\beta ||_1$"),
         ylab = "Average intersection size", col = (1:7)[-5], lwd = 2)
-legend('bottomright', col = (1:7)[-5][1:5], ncol = 1, lwd = 2, legend = labels.rec[1:5], lty = 1)
+legend('bottomright', col = (1:7)[-5][1:5], ncol = 1, lwd = 2, legend = labels.rec[1:5], lty = 1:5)
 mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
 dev.off()
 
