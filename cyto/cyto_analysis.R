@@ -137,6 +137,3 @@ for (env in envs){
   cat("\\hline")
   cat("\n")
 }
-
-
-
