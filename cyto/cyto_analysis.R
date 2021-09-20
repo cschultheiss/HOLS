@@ -1,5 +1,7 @@
 library(readxl)
-source('~/Documents/ETH/PhD/HOLS/cyto_functions.R')
+source('~/Documents/ETH/PhD/HOLS/cyto/cyto_functions.R')
+options(digits = 2)
+
 folder <- "Protein-signal"
 flz <- list.files(folder)
 flz2 <- character(0)
@@ -11,6 +13,7 @@ for(file in flz2){
   all.env <- c(all.env, as.numeric(gsub( " .*.", "", file )))
 }
 flz2 <- flz2[order(all.env)]
+
 i <- 0
 for (file in flz2){
   i <- i + 1
@@ -41,9 +44,67 @@ parents["pjnk", c("pkc", "pka")] <- TRUE
 
 
 env.map <- c("NA", "NA", "akt", "pkc", "pip2", "mek", "NA", "pkc", "pka")
-
 envs <- (1:9)[-2]
-log = TRUE
+
+# using consensus network
+log <- TRUE
+all.analysis <- list()
+for (env in envs){
+  env.a <- env
+  if (length(env) > 1) env.a <- paste(env, collapse = ", ")
+  all.analysis[[env]] <- list()
+  pval.lm <- matrix(NA, length(vars), length(vars))
+  rownames(pval.lm) <- colnames(pval.lm) <- vars
+  pval.HOLS <- pval.lm
+  for (var in vars){
+    cat(var)
+    cat(":  ")
+    preds <- names(which(parents[var,]))
+    cat (preds)
+    cat("   ")
+    if (length(preds) > 0){
+      form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
+      fit <- lm(form, data = log(dat[dat$env %in% env,]))
+      hc <- cyto.HOLS(preds, var, env, log = log)
+      cat(" beta.OLS:", hc$beta.OLS)
+      cat(" pval: ", hc$pval)
+      pval.lm[var, preds] <- summary(fit)$coefficients[-1, 4]
+      pval.HOLS[var, preds] <- hc$pval
+    }
+    cat("\n")
+  }
+
+  pval.max <- pval.lm
+  pval.max.filtered <- pval.max
+  pval.max.filtered[pval.HOLS < 0.05] <- NA
+  all.analysis[[env.a]]$pval.lm <- pval.lm
+  all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
+  all.analysis[[env.a]]$pval.max <- pval.max
+  all.analysis[[env.a]]$pval.max.filtered <- pval.max.filtered
+}
+
+pas <- paste("all.analysis[[", envs, "]]$pval.max.filtered", collapse = ", ", sep = "")
+pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
+
+sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max))", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max.filtered))", sep = "", collapse = " + ")))
+pvals <- pval.min[!is.na(pval.min)]
+sums <- sums[sums.filtered > 0]
+sums.filtered <- sums.filtered[sums.filtered > 0]
+ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
+ord <- order(pvals)
+
+for (i in 1:length(sums)){
+  cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
+  cat(" & ")
+  # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(paste("\\", "\\", sep=""))
+  cat("\n")
+}
+
+# using ancestor detection
+log <- TRUE
 all.analysis <- list()
 for (env in envs){
   env.a <- env
@@ -62,14 +123,12 @@ for (env in envs){
     preds <- preds[preds != var]
     cat (preds)
     cat("   ")
-    # preds <- vars[vars != var]
     if (length(preds) > 0){
       form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
       fit <- lm(form, data = log(dat[dat$env %in% env,]))
       hc <- cyto.HOLS(preds, var, env, log = log)
       cat(" beta.OLS:", hc$beta.OLS)
-      # cat(" pval lm", summary(fit)$coefficients[-1, 4])
-      cat(" pval: ", hc$pval.corr)
+      cat(" pval: ", hc$pval)
       pval.lm[var, preds] <- summary(fit)$coefficients[-1, 4]
       pval.HOLS[var, preds] <- hc$pval
     }
@@ -77,7 +136,6 @@ for (env in envs){
   }
   diag(pval.anc) <- 1
   pval.max <- pmax(pval.anc, pval.lm)
-  # pval.max <- pval.lm
   pval.max.filtered <- pval.max
   pval.max.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env.a]]$pval.lm <- pval.lm
@@ -97,43 +155,12 @@ sums <- sums[sums.filtered > 0]
 sums.filtered <- sums.filtered[sums.filtered > 0]
 ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
 ord <- order(pvals)
-cbind(ma[ord,], pvals[ord], sums[ord], sums.filtered[ord])
 
 for (i in 1:length(sums)){
   cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
-  # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
-  cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
   cat(paste("\\", "\\", sep=""))
   cat("\n")
 }
 
-
-for (env in envs){
-  # print(env)
-  env.a <- env
-  if (length(env) > 1) env.a <- paste(env, collapse = ", ")
-  wi <- which(all.analysis[[env.a]]$pval.lm < 0.05 & all.analysis[[env.a]]$pval.HOLS > 0.05, arr.ind = TRUE)
-  wi <- wi[order(wi[,1]), ]
-  ma <- map(wi)
-  ma <- cbind(ma, character(nrow(ma)))
-  colnames(ma)[3] <- "form"
-  if( nrow(ma) > 0){
-    for (i in 1:nrow(ma)){
-      ma[i, "form"] <- paste(latex_name(ma[i, "row"]), "$\\sim$",
-                             paste(latex_name(names(which(!is.na(all.analysis[[env.a]]$pval.lm[ma[i, "row"],])))), collapse = " + "))
-    }
-    ma[, 1] <- latex_name(ma[,1])
-    ma[, 2] <- latex_name(ma[,2])
-    cat(paste("\\","multirow{", nrow(ma), "}{*}{", env.a, "}", sep =""))
-    for(i in 1:nrow(ma)){
-      cat(" & ")
-      cat(paste(ma[i,], collapse = " & "))
-      cat(paste("\\", "\\", sep=""))
-      cat("\n")
-    }
-  }
-
-  cat("\\hline")
-  cat("\n")
-}
