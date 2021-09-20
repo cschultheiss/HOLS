@@ -10,3 +10,5 @@ Create data for figures (folder structure shall be adapated to user's needs):
 - Figure 7: run null_simulation.R on commit        https://github.com/cschultheiss/HOLS/tree/a8e6bc42689e5139fa2b3af2ec1489b1ed9c3d51
 - Figures 8 + 9: run HA_simulation.R on commit     https://github.com/cschultheiss/HOLS/tree/aa7ea8f6732b327a2252427dd60064072aea7504
 - Figures 10 + 11: run HA_simulation.R on commit   https://github.com/cschultheiss/HOLS/tree/cc80d12f802b1dc01c0d56690d855ccc6f5c66ef
+
+Create the tables for the analys of the Sachs et al. dataset (https://www.science.org/doi/full/10.1126/science.1105809): run cyto_analysis.R on commit https://github.com/cschultheiss/HOLS/tree/9a0feab83b2b6b6713156be0d97b634e52629e10
