@@ -18,4 +18,12 @@ Protein-signal
 .DS_Store
 git-mv-with-history
 examples.R
-
+DAG.R
+GTEX_find_z.R
+check_parallel.R
+get_riboflavin_z.R
+helpers.R
+helpers.nodewise.R
+semisynth_simulation.R
+simple_examples.R
+variance_analysis.R
