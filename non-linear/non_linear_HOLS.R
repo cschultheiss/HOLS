@@ -117,3 +117,23 @@ pval.hhg <- function(z, eps) {
   }
   list(pvals = pvals, stat = stat)
 }
+
+double.fit <- function(x, y) {
+  if (is.vector(x)) x <- matrix(x, ncol = 1)
+  n <- dim(x)[1]
+  p <- dim(x)[2]
+  if (length(y) != n) stop("Dimensions do not match")
+  colnames(x)[which(colnames(x) == "y")] = "y.new"
+  xy <- data.frame(x, y)
+  form.y <- wrapFormula(y ~ ., data = xy)
+  fit <- gam(form.y, data = xy)
+  eps <- fit$residuals
+  newdata <- data.frame(x, eps = fit$residuals^2)
+  form.new <- wrapFormula(eps ~ ., data = newdata)
+  fit.new <- gam(form.new, data = newdata)
+  structure(list(fit.y = fit, fit.eps = fit.new), class = "double.fit")
+}
+
+print.double.fit <- function(out){
+  print(summary(out$fit.eps)$s.table[,4])
+}
