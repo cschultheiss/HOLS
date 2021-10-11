@@ -26,7 +26,7 @@ if (save) {
 }
 
 
-nsim <- 10
+nsim <- 200
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -40,7 +40,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- c(1e3, 1e4)#c(1e2, 1e3, 1e4, 1e5, 1e6)
+n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
 p <- 3
 p2 <- 3
 var <- 1.080588
