@@ -12,7 +12,7 @@ require(expm)
 require(mgcv)
 require(sfsmisc)
 
-source('non_linear_HOLS.R')
+source('non-linear/non_linear_HOLS.R')
 source('simulation_analysis.R')
 
 commit <- revparse_single(revision = "HEAD")
@@ -26,7 +26,7 @@ if (save) {
 }
 
 
-nsim <- 200
+nsim <- 10
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -40,7 +40,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
+n.vec <- c(1e3, 1e4)#c(1e2, 1e3, 1e4, 1e5, 1e6)
 p <- 3
 p2 <- 3
 var <- 1.080588
@@ -83,12 +83,13 @@ for (n in n.vec) {
                  # 
                  # x.sub <- x[, -3]
                  
-                 nw <- nodewise.check(x, y, pval.func = c(pval.sqcorr, pval.hhg))
+                 df <- double.fit(x, y)
+                 su <- summary(df$fit.eps)
                  
                  out <- list()
                  
                  # low-dimensional
-                 out$low.dim <- nw$pval.out
+                 out$low.dim <- as.vector(su$s.table[,4:3])
                  
                  out                           
                }
@@ -96,8 +97,7 @@ for (n in n.vec) {
   stopCluster(cl)
   
   res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
-  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2),
-                         rep("p.value.hhg", p2), rep("stat.hhg", p2))
+  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2))
 
   
   simulation <- list(low.dim = res.low, # high.dim = res.high,
@@ -107,7 +107,4 @@ for (n in n.vec) {
   
   print(apply(simulation$low.dim[, 1:p2], 2, median))
   print(apply(simulation$low.dim[, (p2 + 1):(2 * p2)], 2, mean))
-  print(apply(simulation$low.dim[, (2 * p2 + 1):(3 * p2)], 2, median))
-  print(apply(simulation$low.dim[, (3 * p2 + 1):(4 * p2)], 2, median))
 }
-
