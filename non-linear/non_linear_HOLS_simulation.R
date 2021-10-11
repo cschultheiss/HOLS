@@ -64,10 +64,10 @@ for (n in n.vec) {
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc", "dHSIC", "HHG"), .options.snow = opts) %dorng%{
                  # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
                  H <- rnorm(n)
-                 x1 <- sqrt(0.8) * as.vector(scale(pot(H, 1.5))) + sqrt(0.2) * rnorm(n)
-                 x2 <- sqrt(0.8) * as.vector(scale(pot(x1, 1.5))) + sqrt(0.2) * rnorm(n)
+                 x1 <- sqrt(0.8) * as.vector(scale(pot(H, 1.1))) + sqrt(0.2) * rnorm(n)
+                 x2 <- sqrt(0.8) * as.vector(scale(pot(x1, 1.1))) + sqrt(0.2) * rnorm(n)
                  x3 <- rnorm(n)
-                 y <- sqrt(0.8) * as.vector(scale(sin(H) + sin(x2) + sin(x3))) + sqrt(0.2) * rnorm(n)
+                 y <- sqrt(0.8) * as.vector(scale(sin(H) + pot(x2, 1.1) + sin(x3))) + sqrt(0.2) * rnorm(n)
                  
                  
                  # x1 <- rnorm(n)
