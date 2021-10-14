@@ -6,7 +6,7 @@ n <- 1e4
 h <- rnorm(n)
 x1 <- pot(h, 1.1) + rnorm(n)
 x2 <- rnorm(n)
-y <- pot(h, 1.5) + pot(x2, 1.1) + rnorm(n)
+y <- pot(x1, 1.5) + pot(x2, 1.1) + rnorm(n)
 
 
 (df <- double.fit(cbind(x1, x2), y))
@@ -26,7 +26,7 @@ model %>% compile(loss = 'mse',
 
 mymodel <- model %>%          
   fit(data[,1:2],data[,3],
-      verbose = 1,
+      verbose = 0,
       view_metrics = TRUE,
       epochs = 100,
       batch_size = 32,
