@@ -1,12 +1,14 @@
 require(keras)
-library(magrittr)
-
+require(magrittr)
+source("non-linear/non_linear_HOLS.R")
+require(reticulate)
+use_condaenv("/Users/cschulth/opt/miniconda3/envs/r-reticulate", required = TRUE)
 
 n <- 1e4
 h <- rnorm(n)
 x1 <- pot(h, 1.1) + rnorm(n)
 x2 <- rnorm(n)
-y <- pot(x1, 1.5) + pot(x2, 1.1) + rnorm(n)
+y <- pot(h, 1.5) + pot(x2, 1.1) + rnorm(n)
 
 
 (df <- double.fit(cbind(x1, x2), y))
