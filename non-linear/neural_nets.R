@@ -5,72 +5,81 @@ require(reticulate)
 use_condaenv("/Users/cschulth/opt/miniconda3/envs/r-reticulate", required = TRUE)
 
 n <- 1e4
+p <- 3
 h <- rnorm(n)
-x1 <- pot(h, 1.1) + rnorm(n)
-x2 <- rnorm(n)
-y <- pot(h, 1.5) + pot(x2, 1.1) + rnorm(n)
+x1 <- sqrt(0.5) * (pot(h, 1.1) + rnorm(n))
+x2 <- sqrt(0.5) * (pot(x1, 1.1) + rnorm(n))
+x3 <- rnorm(n)
+y <- pot(h, 1.2) + pot(x2, 1.2) + pot(x3, 1.5) + rnorm(n)
 
+x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
 
-(df <- double.fit(cbind(x1, x2), y))
+(df <- double.fit(x, y))
 
 ind <- sample(n, n/2)
-data <- cbind(x1, x2, y)
-data1 <- data[ind,]
-data2 <- data[-ind,]
 
 model <- keras_model_sequential()
 model %>%
-  layer_dense(units = 5, activation = 'relu', input_shape = c(2)) %>%
+  layer_dense(units = 100, activation = 'relu', input_shape = c(p)) %>%
+  layer_dropout(rate=0.4)  %>%
+  layer_dense(units = 50, activation = 'relu')  %>%
+  layer_dropout(rate=0.2)  %>%
   layer_dense(units = 1)
 model %>% compile(loss = 'mse',
-                  optimizer = 'rmsprop', 
+                  optimizer = 'adam', 
                   metrics = 'mae') 
 
 mymodel <- model %>%          
-  fit(data[,1:2],data[,3],
+  fit(x, y,
       verbose = 0,
       view_metrics = TRUE,
       epochs = 100,
       batch_size = 32,
       validation_split = 0.2)
 
-pred <- model %>% predict(data[,1:2])
+pred <- model %>% predict(x)
 res <- y - pred
 
 modelres <- keras_model_sequential()
 modelres %>%
-  layer_dense(units = 5, activation = 'relu', input_shape = c(2)) %>%
+  layer_dense(units = 100, activation = 'relu', input_shape = c(p)) %>%
+  layer_dropout(rate=0.4)  %>%
+  layer_dense(units = 50, activation = 'relu')  %>%
+  layer_dropout(rate=0.2)  %>%
   layer_dense(units = 1)
 modelres %>% compile(loss = 'mse',
-                  optimizer = 'rmsprop', 
+                  optimizer = 'adam', 
                   metrics = 'mae') 
 
 mymodelres <- modelres %>%          
-  fit(data1[,1:2],res[ind]^2,
+  fit(x[ind,],res[ind]^2,
       verbose = 0,
       view_metrics = TRUE,
       epochs = 100,
       batch_size = 32,
       validation_split = 0.2)
 
-predres <- modelres %>% predict(data2[,1:2])
+predres <- modelres %>% predict(x[-ind,])
 mae0 <- mean(abs(res[-ind]^2-predres))
 
 nrep <- 100
+pval <- numeric(p)
 mae <- numeric(nrep)
-for (i in 1:nrep) {
-  predresi <- modelres %>% predict(cbind(sample(data2[,1]), (data2[,2])))
-  mae[i] <- mean(abs(res[-ind]^2-predresi))
+for (j in 1:p){
+  xp <- x[-ind,]
+  for (i in 1:nrep) {
+    xp[, j] <- sample(xp[, j])
+    predresi <- modelres %>% predict(xp)
+    mae[i] <- mean(abs(res[-ind]^2-predresi))
+  }
+  cat(j)
+  cat(": ")
+  pval[j] <- mean(mae < mae0)
+  cat(pval[j])
+  cat("\n")
 }
 
-sum(mae < mae0)
 
-for (i in 1:nrep) {
-  predresi <- modelres %>% predict(cbind((data2[,1]), sample(data2[,2])))
-  mae[i] <- mean(abs(res[-ind]^2-predresi))
-}
-
-sum(mae < mae0)
 
 
 
