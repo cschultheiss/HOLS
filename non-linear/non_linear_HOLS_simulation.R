@@ -86,10 +86,41 @@ for (n in n.vec) {
                  df <- double.fit(x, y)
                  su <- summary(df$fit.eps)
                  
+                 fo <- foci(df$fit.y$residuals, x, stop = FALSE)
+                 steps <- numeric(p)
+                 selected <- rep(FALSE, p)
+                 
+                 steps[fo$selectedVar$index] = fo$stepT
+                 ord <- order(fo$selectedVar$index)
+                 if (max(fo$stepT) > 0){
+                   if (min(fo$stepT) < 0) {
+                     selected[fo$selectedVar$index[1 : (min(which(fo$stepT < 0)) - 1)]] = TRUE
+                   } else {
+                     selected <- rep(TRUE, p)
+                   }
+                 }
+                 fo.out <- c(ord, steps, selected)
+                 
+                 fo2 <- foci(df$fit.y$residuals^2, x, stop = FALSE)
+                 steps2 <- numeric(p)
+                 selected2 <- rep(FALSE, p)
+                 
+                 steps2[fo2$selectedVar$index] = fo2$stepT
+                 ord2 <- order(fo2$selectedVar$index)
+                 if (max(fo2$stepT) > 0){
+                   if (min(fo2$stepT) < 0) {
+                     selected2[fo2$selectedVar$index[1 : (min(which(fo2$stepT < 0)) - 1)]] = TRUE
+                   } else {
+                     selected2 <- rep(TRUE, p)
+                   }
+                 }
+                 fo2.out <- c(ord2, steps2, selected2)
+                 
+                 
                  out <- list()
                  
                  # low-dimensional
-                 out$low.dim <- as.vector(su$s.table[,4:3])
+                 out$low.dim <- c(as.vector(su$s.table[,4:3]), fo.out, fo2.out)
                  
                  out                           
                }
@@ -97,7 +128,9 @@ for (n in n.vec) {
   stopCluster(cl)
   
   res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
-  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2))
+  colnames(res.low) <- c(rep("p.value", p2), rep("stat", p2), rep("order", p2),
+                         rep("steps", p2), rep("selected", p2), rep("order2", p2),
+                         rep("steps2", p2), rep("selected2", p2))
 
   
   simulation <- list(low.dim = res.low, # high.dim = res.high,
