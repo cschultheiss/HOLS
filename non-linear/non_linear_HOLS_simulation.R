@@ -11,6 +11,7 @@ require(git2r)
 require(expm)
 require(mgcv)
 require(sfsmisc)
+require(FOCI)
 
 source('non-linear/non_linear_HOLS.R')
 source('simulation_analysis.R')
@@ -61,7 +62,7 @@ for (n in n.vec) {
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc", "dHSIC", "HHG"), .options.snow = opts) %dorng%{
+               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "mgcv", "sfsmisc", "dHSIC", "HHG", "FOCI"), .options.snow = opts) %dorng%{
                  # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
                  H <- rnorm(n)
                  x1 <- sqrt(0.8) * as.vector(scale(pot(H, 1.1))) + sqrt(0.2) * rnorm(n)
@@ -138,6 +139,8 @@ for (n in n.vec) {
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(apply(simulation$low.dim[, 1:p2], 2, median))
-  print(apply(simulation$low.dim[, (p2 + 1):(2 * p2)], 2, mean))
+  print(apply(res.low[, which(colnames(res.low) == "p.value")], 2, median))
+  print(apply(res.low[, which(colnames(res.low) == "stat")], 2, mean))
+  print(apply(res.low[, which(colnames(res.low) == "selected")], 2, mean))
+  print(apply(res.low[, which(colnames(res.low) == "selected2")], 2, mean))
 }
