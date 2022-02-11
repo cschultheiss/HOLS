@@ -39,20 +39,12 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
-p <- 7
-p2 <- 6
-# rho <- 0.6
-# Cov <- toeplitz(rho^(seq(0, p - 1)))
-# Cov <- Cov * solve(Cov)[5,5]
-# sel.index <- c(1, 5, 10, 15, 20)
-# ind <- sel.index
-# beta <- rep(0, p)
-# beta[sel.index] <- 1
-sigma <- 1
-alpha <- sqrt(2.5)
-# data("Boston")
-# bos <- scale(Boston[,-14])
-# nb <- dim(bos)[1]
+p <- 13
+p2 <- 12
+rho <- 0.6
+rho0 <- sqrt(0.1)
+samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
+
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
@@ -70,40 +62,20 @@ for (n in n.vec) {
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
-    x1 <- rt(n, df = 7) / sqrt(1.4)
-    x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
-    x3 <- rt(n, df = 7) / sqrt(1.4)
-    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
-    # x3 <- sqrt(0.5) * (x3 + H)
-    x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
-    x5 <- rt(n, df = 7) / sqrt(1.4)
-    x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
-    x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
-
-    x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
     
-    y.true <- alpha * x3
-    y <- y.true + rnorm(n, sd = sigma)
+    psi <- matrix(samp.mix(n * p), nrow = n)
+    
+    x <- matrix(NA, nrow = n, ncol = p)
+    x[ ,1] <- psi[, 1]
+    for (j in seq(2, p - 2, 3)){
+      x[ ,j] <- rho0 * x[ , 1] + sqrt(1- rho0^2) * psi[, j]
+      x[ ,j + 1] <- rho * x[ , j] + sqrt(1- rho^2) * psi[, j + 1]
+      x[ ,j + 2] <- rho * x[ , j + 1] + sqrt(1- rho^2) * psi[, j + 2]
+    }
+    
     x.sub <- x[, -3]
+    y <- x[, 3]
                  
-    # x <- mvrnorm(n, rep(0,p), Cov)
-    # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE)
-    # x[ ,15] <- x[ ,15] + H
-    # x.sub <- x[, 1:p]
-    # y0 <- x%*%beta
-    # y.true <- y0 + alpha * H
-    # y <- y.true + rnorm(n, sd = sigma)
-                 
-    # ind.1 <- sample(1:nb, n, TRUE)
-    # ind.2 <- sample(1:nb, n, TRUE)
-    # b1 <- bos[ind.1,]
-    # b2 <- bos[ind.2,]
-    # eps <- rnorm(n)
-    # b1[, 1] <- b1[, 1] + eps
-    # b1[, 7] <- b1[, 7] - eps
-    # x.sub <- x <- cbind(b1, b2)
-    # y <- eps
-    
     out <- list()
     
     # low-dimensional
@@ -120,7 +92,7 @@ for (n in n.vec) {
   colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
                          rep("sd.scale", p2), "sigma.hat",
                          rep("pval", p2), rep("pval.corr", p2),
-                         "pval.glob", rep("corrs", p2)
+                         "pval.glob"
                          #, rep("pval.sim", p2),
                          # rep("pval.corr.sim", p2), "pval.glob.sim"
   )
@@ -135,6 +107,5 @@ for (n in n.vec) {
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
   print(simulation.summary(simulation, variables = c(2:3)))
-  print(apply(abs(traf(res.low[, which(colnames(res.low) == "corrs")])), 2, mean) * sqrt(n - 3))
 }
 
