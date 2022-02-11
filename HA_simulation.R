@@ -63,7 +63,7 @@ for (n in n.vec) {
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
     
-    psi <- matrix(samp.mix(n * p), nrow = n)
+    psi <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n)
     
     x <- matrix(NA, nrow = n, ncol = p)
     x[ ,1] <- psi[, 1]
