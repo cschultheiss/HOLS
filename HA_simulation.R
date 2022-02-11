@@ -1,6 +1,7 @@
 rm(list = ls(all = TRUE))
 require(MASS)
 require(hdi)
+require(glmnet)
 require(Matrix)
 require(tictoc)
 require(doRNG)
@@ -39,8 +40,6 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
-p <- 13
-p2 <- 12
 rho <- 0.6
 rho0 <- sqrt(0.1)
 samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
@@ -55,12 +54,14 @@ seed.n <- 0
 for (n in n.vec) {
   seed.n <- seed.n + 1
   set.seed(seed.vec[seed.n])
-  
+  p <- round(0.5 * n) * 3 + 1
+  phd <- p - 1
+  pld <- 12
   cl<-makeSOCKcluster(16) 
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+               .packages = c("MASS", "Matrix", "hdi", "glmnet", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
   # res <- foreach(gu = 1:nsim, .combine = rbind) %do%{
     
     psi <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n)
@@ -79,30 +80,41 @@ for (n in n.vec) {
     out <- list()
     
     # low-dimensional
-    out$low.dim <- HOLS.check(x.sub, y, simulated.pval = FALSE)
+    out$low.dim <- HOLS.check(x.sub[, 1:pld], y, simulated.pval = FALSE)
     
     # high-dimensional
-    # out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE)                         
+    lp <- lasso.proj(x.sub, y, standardize = FALSE, return.Z = TRUE, do.ZnZ = FALSE)
+    out$high.dim <- HOLS.check(x.sub, y, use.Lasso = TRUE, lasso.proj.out = lp)
+    out$high.dim.new <- HOLS.check(x.sub, y, use.Lasso = TRUE, lasso.proj.out = lp,
+                                   debias.z3 = TRUE, return.changed = TRUE, do.ZnZ = FALSE)
+    
     out                           
     }
   toc()
   stopCluster(cl)
   
   res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
-  colnames(res.low) <- c(rep("beta.OLS", p2), rep("beta.HOLS", p2),
-                         rep("sd.scale", p2), "sigma.hat",
-                         rep("pval", p2), rep("pval.corr", p2),
+  colnames(res.low) <- c(rep("beta.OLS", pld), rep("beta.HOLS", pld),
+                         rep("sd.scale", pld), "sigma.hat",
+                         rep("pval", pld), rep("pval.corr", pld),
                          "pval.glob"
-                         #, rep("pval.sim", p2),
-                         # rep("pval.corr.sim", p2), "pval.glob.sim"
+                         #, rep("pval.sim", pld),
+                         # rep("pval.corr.sim", pld), "pval.glob.sim"
   )
-  # res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
-  # colnames(res.high) <- c(rep("beta.OLS", p), rep("beta.HOLS", p),
-  #                         rep("sd.scale", p), "sigma.hat",
-  #                         rep("pval", p), rep("pval.corr", p))
   
-  simulation <- list(low.dim = res.low, # high.dim = res.high,
-                     n= n, r.seed = attr(res, "rng"), "commit" = commit)
+  res.high <- matrix(unlist(res[, "high.dim"]), byrow = TRUE, nrow = nsim)
+  colnames(res.high) <- c(rep("beta.OLS", phd), rep("beta.HOLS", phd),
+                          rep("sd.scale", phd), "sigma.hat",
+                          rep("pval", phd), rep("pval.corr", phd))
+  
+  res.high.new <- matrix(unlist(res[, "high.dim.new"]), byrow = TRUE, nrow = nsim)
+  colnames(res.high.new) <- c(rep("beta.OLS", phd), rep("beta.HOLS", phd),
+                              rep("sd.scale", phd), "sigma.hat",
+                              rep("pval", phd), rep("pval.corr", phd), "changed")
+  
+  simulation <- list(low.dim = res.low, high.dim = res.high, high.dim.new = res.high.new,
+                     r.seed = attr(res, "rng"), "commit" = commit)
+  
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
