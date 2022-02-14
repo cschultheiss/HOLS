@@ -155,6 +155,35 @@ legend('bottomright', col = (1:7)[-5][1:5], ncol = 1, lwd = 2, legend = labels.r
 mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
 dev.off()
 
+groups <- list(1, 9, 14:26)
+var.labels <- c("1", "9", "U")
+var.labels.tex <- eval(parse(text = paste("c(", paste("TeX('ECDF of p-values for $X_", var.labels, "$')", sep = "", collapse = ","), ")")))
+qs <- seq(0, 1, 0.01)
+last <- 5
+cols <- (1:6)[-5]
+png(paste(savefolder, "/ecdf.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1, length(groups)))
+i <- 0
+for (group in groups) {
+  i <- i + 1
+  j <- 0
+  last.new <- 5
+  for (file in flz) {
+    j <- j + 1
+    load(paste(folder, "/", file, sep = ""))
+    pv <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
+    if (j == 1)
+      plot(qs, ecdf(pv[,group])(qs), col = cols[j], xlim = c(0,1), type = "l", lwd = 2, lty = j,
+              xlab = "p", ylab ="Fn(p)", main = var.labels.tex[i])
+    else if (last.new >= j)
+      lines(qs, ecdf(pv[,group])(qs), col = cols[j], lwd = 2, lty = j)
+    if (last.new == last && ecdf(pv[,group])(qs[2])  == 1) last.new <- j
+  }
+  legend('bottomright', col = cols, lwd = 2, legend = labels.rec[1:last.new], lty = 1:last.new)
+}
+dev.off()
+
 folder <- "results/SEM ancestor x4"
 savefolder <- "Figures/SEM ancestor x4"
 
