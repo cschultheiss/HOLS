@@ -39,7 +39,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- c(1e2, 1e3)
+n.vec <- 10^(2:4)
 rho <- 0.6
 rho0 <- sqrt(0.1)
 samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
@@ -54,7 +54,7 @@ seed.n <- 0
 for (n in n.vec) {
   seed.n <- seed.n + 1
   set.seed(seed.vec[seed.n])
-  p <- round(0.5 * n) * 3 + 1
+  p <- 13
   phd <- p - 1
   pld <- 12
   cl<-makeSOCKcluster(16) 
