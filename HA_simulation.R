@@ -39,7 +39,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- 10^(2:4)
+n.vec <- 10^(2:6)
 rho <- 0.6
 rho0 <- sqrt(0.1)
 samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
