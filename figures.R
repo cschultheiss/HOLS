@@ -284,7 +284,11 @@ apply(true.model, 2, mean)
 savefolder <- "Figures/mix-Gauss null"
 load("~/Documents/ETH/PhD/HOLS/results/mix-Gauss null.RData")
 pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
-pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")] 
+pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")]
+pval.corr <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.corr")]
+pval.corrh <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval.corr")]
+pval.corr.min <- apply(pval.corr, 1, min)
+pval.corr.minh <- apply(pval.corrh, 1, min)
 q <- (0:100)/100
 plotfac <- 4
 pointfrac <- 0.8
@@ -300,6 +304,7 @@ plot.ecdf(pval, xlim = c(0,1), lwd = 2, xlab = "p", ylab ="Fn(p)", main = "ECDF 
 lines(0:1, 0:1, col ="grey", lty = 2, lwd = 4)
 dev.off()
 
+
 png(paste(savefolder, "/high-dim.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1, 2))
@@ -308,6 +313,20 @@ plot.ecdf(pval.h, xlim = c(0,1), lwd = 2, xlab = "p", ylab ="Fn(p)", main = "ECD
 # qqplot(q, pval.h, type = "l", lwd = 2, xlab = "Quantiles of uniform distribution",
 #        ylab = "Quantiles of p-values", main = "Q-Q plot")
 lines(0:1, 0:1, col ="grey", lty = 2, lwd = 4)
+dev.off()
+
+png(paste(savefolder, "/ecdf.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+qs <- seq(0, 1, 0.01)
+par(mfrow = c(1, 2))
+plot(qs, ecdf(pval)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
+     xlab = "p", ylab ="Fn(p)", main = TeX("ECDF of p-values for $p=30$"))
+lines(qs, ecdf(pval.corr.min)(qs), col = 2, lwd = 2, lty = 2)
+legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
+plot(qs, ecdf(pval.h)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
+     xlab = "p", ylab ="Fn(p)", main = TeX("ECDF of p-values for $p=200$"))
+lines(qs, ecdf(pval.corr.minh)(qs), col = 2, lwd = 2, lty = 2)
+legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
 dev.off()
 
 plot.cols <- function(res, cols, pf = plot, ...){
