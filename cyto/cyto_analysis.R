@@ -74,31 +74,36 @@ for (env in envs){
     cat("\n")
   }
 
-  pval.max <- pval.lm
-  pval.max.filtered <- pval.max
-  pval.max.filtered[pval.HOLS < 0.05] <- NA
+  pval.comb <- pval.lm
+  pval.comb.filtered <- pval.comb
+  pval.comb.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env.a]]$pval.lm <- pval.lm
   all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
-  all.analysis[[env.a]]$pval.max <- pval.max
-  all.analysis[[env.a]]$pval.max.filtered <- pval.max.filtered
+  all.analysis[[env.a]]$pval.comb <- pval.comb
+  all.analysis[[env.a]]$pval.comb.filtered <- pval.comb.filtered
 }
 
-pas <- paste("all.analysis[[", envs, "]]$pval.max.filtered", collapse = ", ", sep = "")
+pas <- paste("all.analysis[[", envs, "]]$pval.comb.filtered", collapse = ", ", sep = "")
 pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
+pval.max <- eval(parse(text = paste("pmax(", pas, ", na.rm = TRUE)", sep="")))
 
-sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max))", sep = "", collapse = " + ")))
-sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max.filtered))", sep = "", collapse = " + ")))
+sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb))", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered))", sep = "", collapse = " + ")))
+sums.filtered.sign <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered) & all.analysis[[", envs, "]]$pval.comb.filtered < 0.05 / 136 )", sep = "", collapse = " + ")))
+sums.filtered.raw <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered) & all.analysis[[", envs, "]]$pval.comb.filtered < 0.05 )", sep = "", collapse = " + ")))
 pvals <- pval.min[!is.na(pval.min)]
-sums <- sums[sums.filtered > 0]
-sums.filtered <- sums.filtered[sums.filtered > 0]
+pval.max <- pval.max[!is.na(pval.min)]
+sums <- sums[!is.na(pval.min)]
+sums.filtered <- sums.filtered[!is.na(pval.min)]
+sums.filtered.sign <- sums.filtered.sign[!is.na(pval.min)]
+sums.filtered.raw <- sums.filtered.raw[!is.na(pval.min)]
 ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
 ord <- order(pvals)
 
 for (i in 1:length(sums)){
   cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
-  # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
-  cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
+  cat(sums.filtered[ord[i]]," & ", sums.filtered.sign[ord[i]], " & ", pvals[ord[i]])
   cat(paste("\\", "\\", sep=""))
   cat("\n")
 }
@@ -135,21 +140,21 @@ for (env in envs){
     cat("\n")
   }
   diag(pval.anc) <- 1
-  pval.max <- pmax(pval.anc, pval.lm)
-  pval.max.filtered <- pval.max
-  pval.max.filtered[pval.HOLS < 0.05] <- NA
+  pval.comb <- pmax(pval.anc, pval.lm)
+  pval.comb.filtered <- pval.comb
+  pval.comb.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env.a]]$pval.lm <- pval.lm
   all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
   all.analysis[[env.a]]$pval.anc <- pval.anc
-  all.analysis[[env.a]]$pval.max <- pval.max
-  all.analysis[[env.a]]$pval.max.filtered <- pval.max.filtered
+  all.analysis[[env.a]]$pval.comb <- pval.comb
+  all.analysis[[env.a]]$pval.comb.filtered <- pval.comb.filtered
 }
 
-pas <- paste("all.analysis[[", envs, "]]$pval.max.filtered", collapse = ", ", sep = "")
+pas <- paste("all.analysis[[", envs, "]]$pval.comb.filtered", collapse = ", ", sep = "")
 pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
 
-sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max))", sep = "", collapse = " + ")))
-sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.max.filtered))", sep = "", collapse = " + ")))
+sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb))", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered))", sep = "", collapse = " + ")))
 pvals <- pval.min[!is.na(pval.min)]
 sums <- sums[sums.filtered > 0]
 sums.filtered <- sums.filtered[sums.filtered > 0]
