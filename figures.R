@@ -156,7 +156,7 @@ mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
 dev.off()
 
 groups <- list(2, 3, -c(2,3))
-var.labels <- c("3", "4", "U")
+var.labels <- c("2", "4", "U")
 var.labels.tex <- eval(parse(text = paste("c(", paste("TeX('ECDF of p-values for $X_", var.labels, "$')", sep = "", collapse = ","), ")")))
 qs <- seq(0, 1, 0.01)
 last <- 2
