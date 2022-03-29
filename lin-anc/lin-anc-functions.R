@@ -7,7 +7,7 @@ lin.anc <- function(x, response, multicorr.out.factor = 1, alpha = 0.05, f  = fu
   su <- summary(lm (y ~ ., data = x))
   alpha <- alpha / multicorr.out.factor
   if (multicorr.in) alpha <- alpha / (p - 1)
-  return(list(su$coefficients[-1,4], cols[which(su$coefficients[-c(1, j + 1),4] < alpha)]))
+  return(list(su$coefficients[-1,4], cols[-j][which(su$coefficients[-c(1, j + 1),4] < alpha)]))
 }
 
 lin.anc.all <- function(x, multicorr.out = TRUE, ...){
