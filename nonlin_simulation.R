@@ -9,6 +9,9 @@ require(parallel)
 require(MultiRNG)
 require(git2r)
 require(expm)
+require(pcalg)
+
+source('lin-anc/lin-anc-functions.R')
 
 commit <- revparse_single(revision = "HEAD")
 print(paste("Run on commit", commit$sha, 'i.e.:', commit$summary))
@@ -20,7 +23,7 @@ if (save) {
   dir.create(paste("results/", newdir, sep="")) 
 }
 
-nsim <- 200
+nsim <- 20
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -34,7 +37,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
+n.vec <- c(1e4)
 p <- 7
 
 RNGkind("L'Ecuyer-CMRG")
@@ -43,6 +46,21 @@ seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
 
+pmat <- matrix(FALSE, nrow = p, ncol = p)
+diag(pmat) <- NA
+pmat[1, 2] <- pmat [2, 4] <- pmat[3, 4] <- pmat[4, 6] <- pmat[5, 6] <- pmat[6, 7] <- TRUE
+ancmat <- pmat
+for (j in 1:p){
+  tested <- integer(0)
+  an <- which(pmat[, j])
+  while (length(setdiff(an, tested)) > 0) {
+    for (k in setdiff(an, tested)) {
+      an <- unique(c(an, which(pmat[, k])))
+      tested <- c(tested, k)
+    }
+  }
+  ancmat[an ,j] <- TRUE
+}
 
 for (n in n.vec) {
   print(n)
@@ -53,7 +71,7 @@ for (n in n.vec) {
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "pcalg"), .options.snow = opts) %dorng%{
                  
      x1 <- rt(n, df = 7) / sqrt(1.4)
      x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
@@ -66,23 +84,36 @@ for (n in n.vec) {
      x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
      x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
      
+     st1 <- system.time(laa <- lin.anc.all(x))
+     st2 <- system.time(lg <- lingam(x))
+     
      summ <- summary(lm(x[, 4]^3 ~ -1 + x))
      
      out <- list()
-     out$res <- list(beta = summ$coefficients[,"Estimate"], sigma = summ$sigma,
-                 t.vals = summ$coefficients[,"t value"] )
+     out$res <- list(laa = t(laa[[1]]), lg = as(lg, "amat"), st1 = st1[3], st2 = st2[3])
      out                           
   } 
   toc()
   stopCluster(cl)
   res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
-  colnames(res.mat) <- c(rep("beta.FOLS", p), "sigma", rep("t.val", p))
+  cn <- paste("x", 1:p, sep="")
+  cn.cross <- paste(cn, rep(cn, each = p), sep = "to")
+  colnames(res.mat) <- c(paste(rep(c("laa", "lingam"), each = p^2), cn.cross, sep = "."), "t.laa", "t.lingam")
   
   simulation <- list(res = res.mat, # high.dim = res.high,
                      n = n, r.seed = attr(res, "rng"), "commit" = commit)
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(apply(res.mat, 2 , mean))
+  print("LAA positives:")
+  print(apply(res.mat[,1:p^2][,which(ancmat)], 2 , median))
+  print("LAA neagtives:")
+  print(apply(res.mat[,1:p^2][,which(!ancmat)], 2 , median))
+  print("lingam positives:")
+  print(apply(res.mat[,p^2 + (1:p^2)][,which(pmat)], 2 , mean))
+  print("lingam negatives:")
+  print(apply(res.mat[,p^2 + (1:p^2)][,which(!pmat)], 2 , mean))
+  print("runtime")
+  print(apply(res.mat[,c("t.laa", "t.lingam")], 2, mean))
 }
 
