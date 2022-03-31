@@ -81,13 +81,12 @@ for (n in n.vec) {
      x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
      x5 <- rt(n, df = 7) / sqrt(1.4)
      x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
-     x7 <- sqrt(0.5) * x6 + sqrt(0.5) * rnorm(n)
+     x7 <- sqrt(0.5) * x6 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
      x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
      
      st1 <- system.time(laa <- lin.anc.all(x))
+     laa
      st2 <- system.time(lg <- lingam(x))
-     
-     summ <- summary(lm(x[, 4]^3 ~ -1 + x))
      
      out <- list()
      out$res <- list(laa = t(laa[[1]]), lg = as(lg, "amat"), st1 = st1[3], st2 = st2[3])
