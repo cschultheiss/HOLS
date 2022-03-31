@@ -37,7 +37,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- 10^(2:7)
+n.vec <- 10^(2:6)
 p <- 7
 
 RNGkind("L'Ecuyer-CMRG")
