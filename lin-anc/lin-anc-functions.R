@@ -27,3 +27,85 @@ lin.anc.all <- function(x, multicorr.out = TRUE, ...){
   }
   list(pv, anc)
 }
+
+# turns matrix of parents to matrix of ancestors; j's ancestors stored in column j
+p.to.anc <- function(pmat) {
+  p <- ncol(pmat)
+  if (nrow(pmat) != p) stop("Need quadratic input")
+  ancmat <- pmat
+  for (j in 1:p){
+    tested <- integer(0)
+    an <- which(pmat[, j])
+    while (length(setdiff(an, tested)) > 0) {
+      for (k in setdiff(an, tested)) {
+        an <- unique(c(an, which(pmat[, k])))
+        tested <- c(tested, k)
+      }
+    }
+    ancmat[an ,j] <- TRUE
+  }
+  return(ancmat)
+}
+
+# same when parents are stored in vector
+p.to.anc.vec <- function(ps){
+  p <- sqrt(length(ps))
+  if (abs(p - round(p)) > 1e-5) stop("Bad column number")
+  mat <- as.matrix(matrix(ps, nrow = p))
+  mat <- p.to.anc(mat)
+  ps[] <- c(mat)
+  ps
+}
+
+# set less significant direction to 1 by default, avoid two variable loops
+set1 <- function(pvs){
+  pv <- as.numeric(pvs)
+  p <- sqrt(length(pv))
+  if (abs(p - round(p)) > 1e-5) stop("Bad column number")
+  mat <- as.matrix(matrix(pv, nrow = p))
+  mat[mat >= t(mat)] <- 1
+  pvs[] <- c(mat)
+  return(pvs)
+}
+
+find.structure <- function(pvs, alpha = 0.05){
+  pv <- as.numeric(pvs)
+  p <- sqrt(length(pv))
+  if (abs(p - round(p)) > 1e-5) stop("Bad column number")
+  pvs.mat <- matrix(pvs, p)
+  anc1 <- pvs.mat < alpha
+  anc <- p.to.anc(anc1)
+  if(sum(diag(anc)) == 0){
+    pvs[] <- c(anc)
+    return(list(rec.ancs = pvs, alpha = alpha))
+  } else {
+    loop.vars <- which(diag(anc))
+    pvs.mat <- pvs.mat[loop.vars, loop.vars]
+    pvs.sub <- c(pvs.mat[pvs.mat < alpha])
+    new.alpha <- max(pvs.sub)
+    print(paste("Try decreasing alpha from", round(alpha, 3), "to", round(new.alpha, 3)))
+    find.structure(pvs, new.alpha)
+  }
+}
+
+find.structures <- function(pvs, lims){
+  nl <- length(lims)
+  out <- matrix(nrow = length(lims), ncol = length(pvs))
+  for (i in 1:nl){
+    stru <- find.structure(pvs, lims[i])
+    out[i,] <- stru[[1]]
+    if (stru[[2]] < lims[i]) {
+      out[(i + 1):nl,] <- rep(stru[[1]], each = nl -i)
+      break
+    }
+  }
+  out
+}
+
+find.contr <- function(pvs, alpha = 0.05){
+  mat <- matrix(pvs, 7) < alpha
+  anc <- p.to.anc(mat)
+  d.anc <- anc + t(anc)
+  pvs[] <- c(d.anc)
+  pvs
+}
