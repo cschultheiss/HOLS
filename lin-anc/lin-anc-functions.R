@@ -110,3 +110,5 @@ find.contr <- function(pvs, alpha = 0.05){
   pvs[] <- c(d.anc)
   pvs
 }
+
+pot <- function(x, p) sign(x)*abs(x)^p

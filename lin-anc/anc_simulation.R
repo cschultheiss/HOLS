@@ -86,10 +86,13 @@ for (n in n.vec) {
      
      st1 <- system.time(laa <- lin.anc.all(x))
      laa
-     st2 <- system.time(lg <- lingam(x))
+     st2 <- system.time(laa2 <- lin.anc.all(x, f = function(x) pot(x, 2)))
+     laa2
+
+
      
      out <- list()
-     out$res <- list(laa = t(laa[[1]]), lg = as(lg, "amat"), st1 = st1[3], st2 = st2[3])
+     out$res <- list(laa = t(laa[[1]]), lg = t(laa2[[1]]), st1 = st1[3], st2 = st2[3])
      out                           
   } 
   toc()
@@ -97,7 +100,7 @@ for (n in n.vec) {
   res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
   cn <- paste("x", 1:p, sep="")
   cn.cross <- paste(cn, rep(cn, each = p), sep = "to")
-  colnames(res.mat) <- c(paste(rep(c("laa", "lingam"), each = p^2), cn.cross, sep = "."), "t.laa", "t.lingam")
+  colnames(res.mat) <- c(paste(rep(c("laa", "laa2"), each = p^2), cn.cross, sep = "."), "t.laa", "t.laa2")
   
   simulation <- list(res = res.mat, # high.dim = res.high,
                      n = n, r.seed = attr(res, "rng"), "commit" = commit)
@@ -108,11 +111,11 @@ for (n in n.vec) {
   print(apply(res.mat[,1:p^2][,which(ancmat)], 2 , median))
   print("LAA neagtives:")
   print(apply(res.mat[,1:p^2][,which(!ancmat)], 2 , median))
-  print("lingam positives:")
-  print(apply(res.mat[,p^2 + (1:p^2)][,which(pmat)], 2 , mean))
-  print("lingam negatives:")
-  print(apply(res.mat[,p^2 + (1:p^2)][,which(!pmat)], 2 , mean))
+  print("LAA2 positives:")
+  print(apply(res.mat[,p^2 + (1:p^2)][,which(ancmat)], 2 , median))
+  print("LAA2 negatives:")
+  print(apply(res.mat[,p^2 + (1:p^2)][,which(!ancmat)], 2 , median))
   print("runtime")
-  print(apply(res.mat[,c("t.laa", "t.lingam")], 2, mean))
+  print(apply(res.mat[,c("t.laa", "t.laa2")], 2, mean))
 }
 
