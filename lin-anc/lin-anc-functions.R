@@ -99,6 +99,7 @@ find.structures <- function(pvs, lims){
       break
     }
   }
+  if(stru[[2]] == max(lims)) print("no decrease necessary")
   out
 }
 
