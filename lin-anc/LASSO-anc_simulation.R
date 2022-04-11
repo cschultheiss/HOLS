@@ -9,6 +9,7 @@ require(parallel)
 require(MultiRNG)
 require(git2r)
 require(expm)
+require(glmnet)
 
 
 source('lin-anc/lin-anc-functions.R')
@@ -66,7 +67,7 @@ for (n in n.vec) {
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
-               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "hdi"), .options.snow = opts) %dorng%{
+               .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "hdi", "glmnet"), .options.snow = opts) %dorng%{
                  
                  x <- matrix(NA, n , p)
                  x[,1] <- runif(n, -sqrt(3), sqrt(3))
