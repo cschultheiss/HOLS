@@ -85,7 +85,7 @@ for (n in n.vec) {
                  colnames(pval) <- colnames(x)
                  for (i in 1:3) {
                    j <- test.ind[i]
-                   sel <- lasso.cv(x[, -j], x[,j])
+                   sel <- lasso.firstq.up(x[, -j], x[,j], 10)
                    sel[sel >= j] <- sel[sel >= j] + 1
                    ps <- lin.anc(x[,c(j,sel)], colnames(x)[j])[[1]]
                    pval[i, sel] <- ps[-1]
