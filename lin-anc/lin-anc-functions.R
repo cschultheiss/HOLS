@@ -112,3 +112,27 @@ find.contr <- function(pvs, alpha = 0.05){
 }
 
 pot <- function(x, p) sign(x)*abs(x)^p
+
+lasso.firstq.up <- function (x, y, q, ...) 
+{
+  again = TRUE
+  qn = q
+  while (again){ 
+    fit <- glmnet(x, y, dfmax = qn, ...)
+    m <- predict(fit, type = "nonzero")
+    delta <- qn - unlist(lapply(m, length))
+    if (min(delta) < qn) 
+      again <- FALSE
+    else
+      qn <- 2 * qn
+  }
+  if (qn == q && any(delta < qn & delta >= 0)){
+    delta[delta < 0] <- Inf
+    take <- which.min(delta)
+    m[[take]]
+  } else {
+    delta[delta == qn] <- -Inf
+    take <- which.max(delta)
+    m[[take]]
+  }
+}
