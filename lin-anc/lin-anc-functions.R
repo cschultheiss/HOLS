@@ -7,7 +7,7 @@ lin.anc <- function(x, response, multicorr.out.factor = 1, alpha = 0.05, f  = fu
   su <- summary(lm (y ~ ., data = x))
   alpha <- alpha / multicorr.out.factor
   if (multicorr.in) alpha <- alpha / (p - 1)
-  return(list(su$coefficients[-1,4], cols[-j][which(su$coefficients[-c(1, j + 1),4] < alpha)]))
+  return(list(su$coefficients[-1,3:4], cols[-j][which(su$coefficients[-c(1, j + 1),4] < alpha)]))
 }
 
 lin.anc.all <- function(x, multicorr.out = TRUE, ...){
@@ -16,16 +16,18 @@ lin.anc.all <- function(x, multicorr.out = TRUE, ...){
   anc <- list()
   pv <- matrix(NA, p, p)
   colnames(pv) <- rownames(pv) <- vars
+  t <- pv
   multicorr.out.factor = 1
   if (multicorr.out) multicorr.out.factor = p
   j <- 0
   for(var in vars){
     j <- j + 1
     la <- lin.anc(x, var, multicorr.out.factor, ...)
-    pv[j,] <- la[[1]]
+    pv[j,] <- la[[1]][, 2]
+    t[j,] <- la[[1]][, 1]
     anc[[var]] <- la[[2]]
   }
-  list(pv, anc)
+  list(pv, t, anc)
 }
 
 # turns matrix of parents to matrix of ancestors; j's ancestors stored in column j
@@ -69,22 +71,27 @@ set1 <- function(pvs){
 }
 
 find.structure <- function(pvs, alpha = 0.05){
-  pv <- as.numeric(pvs)
-  p <- sqrt(length(pv))
-  if (abs(p - round(p)) > 1e-5) stop("Bad column number")
-  pvs.mat <- matrix(pvs, p)
-  anc1 <- pvs.mat < alpha
+  #pv <- as.numeric(pvs)
+  if (nrow(pvs) != ncol(pvs)) stop("Bad dimensions")
+  # p <- sqrt(length(pv))
+  # if (abs(p - round(p)) > 1e-5) stop("Bad column number")
+  # pvs.mat <- matrix(pvs, p)
+  anc1 <- pvs < alpha
   anc <- p.to.anc(anc1)
   if(sum(diag(anc)) == 0){
-    pvs[] <- c(anc)
+    pvs[] <- anc
     return(list(rec.ancs = pvs, alpha = alpha))
   } else {
     loop.vars <- which(diag(anc))
-    pvs.mat <- pvs.mat[loop.vars, loop.vars]
-    pvs.sub <- c(pvs.mat[pvs.mat < alpha])
+    pvs.mat <- pvs[loop.vars, loop.vars]
+    pvs.sub <- pvs.mat[pvs.mat < alpha]
     new.alpha <- max(pvs.sub)
     print(paste("Try decreasing alpha from", round(alpha, 3), "to", round(new.alpha, 3)))
-    find.structure(pvs, new.alpha)
+
+    out <- find.structure(pvs.mat, new.alpha)
+    anc1[loop.vars, loop.vars] <- out$rec.ancs == 1
+    pvs[] <- p.to.anc(anc1)
+    return(list(rec.ancs = pvs, alpha = out$alpha))
   }
 }
 
