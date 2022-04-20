@@ -38,7 +38,7 @@ progress <- function(n, tag) {
 opts <- list(progress = progress)
 
 n.vec <- 10^(2:6)
-p <- 7
+p <- 6
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
@@ -46,21 +46,21 @@ seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
 
-pmat <- matrix(FALSE, nrow = p, ncol = p)
-diag(pmat) <- NA
-pmat[1, 2] <- pmat [2, 4] <- pmat[3, 4] <- pmat[4, 6] <- pmat[5, 6] <- pmat[6, 7] <- TRUE
-ancmat <- pmat
-for (j in 1:p){
-  tested <- integer(0)
-  an <- which(pmat[, j])
-  while (length(setdiff(an, tested)) > 0) {
-    for (k in setdiff(an, tested)) {
-      an <- unique(c(an, which(pmat[, k])))
-      tested <- c(tested, k)
-    }
-  }
-  ancmat[an ,j] <- TRUE
-}
+# pmat <- matrix(FALSE, nrow = p, ncol = p)
+# diag(pmat) <- NA
+# pmat[1, 2] <- pmat [2, 4] <- pmat[3, 4] <- pmat[4, 6] <- pmat[5, 6] <- pmat[6, 7] <- TRUE
+# ancmat <- pmat
+# for (j in 1:p){
+#   tested <- integer(0)
+#   an <- which(pmat[, j])
+#   while (length(setdiff(an, tested)) > 0) {
+#     for (k in setdiff(an, tested)) {
+#       an <- unique(c(an, which(pmat[, k])))
+#       tested <- c(tested, k)
+#     }
+#   }
+#   ancmat[an ,j] <- TRUE
+# }
 
 for (n in n.vec) {
   print(n)
@@ -101,22 +101,13 @@ for (n in n.vec) {
   res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
   cn <- paste("x", 1:p, sep="")
   cn.cross <- cn
-  colnames(res.mat) <- paste(rep(c("laa", "laa2"), each = 2 * p), cn.cross, sep = ".")
+  colnames(res.mat) <- paste(rep(c("t", "pv", "t2", "pv2"), each = p), cn.cross, sep = ".")
   
   simulation <- list(res = res.mat, # high.dim = res.high,
                      n = n, r.seed = attr(res, "rng"), "commit" = commit)
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print("LAA positives:")
-  print(apply(res.mat[,1:p^2][,which(ancmat)], 2 , median))
-  print("LAA neagtives:")
-  print(apply(res.mat[,1:p^2][,which(!ancmat)], 2 , median))
-  print("LAA2 positives:")
-  print(apply(res.mat[,p^2 + (1:p^2)][,which(ancmat)], 2 , median))
-  print("LAA2 negatives:")
-  print(apply(res.mat[,p^2 + (1:p^2)][,which(!ancmat)], 2 , median))
-  print("runtime")
-  print(apply(res.mat[,c("t.laa", "t.laa2")], 2, mean))
+  print(apply(res.mat, 2, mean))
 }
 
