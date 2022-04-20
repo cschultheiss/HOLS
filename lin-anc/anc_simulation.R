@@ -73,34 +73,35 @@ for (n in n.vec) {
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "pcalg"), .options.snow = opts) %dorng%{
                  
-     x1 <- rt(n, df = 7) / sqrt(1.4)
-     x2 <- sqrt(0.5) * x1 + sqrt(0.5) * rnorm(n)
-     x3 <- rt(n, df = 7) / sqrt(1.4)
-     # H <- rexp(n, rate = sqrt(2)) * sample(c(-1,1), n, TRUE) 
-     # x3 <- sqrt(0.5) * (x3 + H)
-     x4 <- 0.5 * x2 + 0.5 * x3 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
-     x5 <- rt(n, df = 7) / sqrt(1.4)
-     x6 <- 0.5 * x4 + 0.5 * x5 + sqrt(0.5) * rnorm(n)
-     x7 <- sqrt(0.5) * x6 + sqrt(0.5) * runif(n, -sqrt(3), sqrt(3))
-     x <- eval(parse(text = paste("cbind(", paste("x", 1:7, sep="", collapse = ","), ")")))
-     
-     st1 <- system.time(laa <- lin.anc.all(x))
-     laa
-     st2 <- system.time(laa2 <- lin.anc.all(x, f = function(x) pot(x, 2)))
-     laa2
+       psi <- cbind(rnorm(n), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
+                    runif(n, -sqrt(3), sqrt(3)), runif(n, -sqrt(3), sqrt(3)), rnorm(n))
+       
+       x1 <- psi[, 1]
+       x2 <- 0.8 * x1 + 0.6 * psi[, 2]
+       x3 <- 0.6 * x1 + 0.8 * psi[, 3]
+       x5 <- psi[, 5]
+       ls <- list()
+       l <- 0
+       for (a in c(0.3, 0.7)) {
+         l <- l + 1
+         x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
+         x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 6]
+         x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
+         ls[[l]] <- lin.anc(x, "x4")[[1]]
+       }
 
 
      
      out <- list()
-     out$res <- list(laa = t(laa[[1]]), lg = t(laa2[[1]]), st1 = st1[3], st2 = st2[3])
+     out$res <- list(unlist(ls))
      out                           
   } 
   toc()
   stopCluster(cl)
   res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
   cn <- paste("x", 1:p, sep="")
-  cn.cross <- paste(cn, rep(cn, each = p), sep = "to")
-  colnames(res.mat) <- c(paste(rep(c("laa", "laa2"), each = p^2), cn.cross, sep = "."), "t.laa", "t.laa2")
+  cn.cross <- cn
+  colnames(res.mat) <- paste(rep(c("laa", "laa2"), each = 2 * p), cn.cross, sep = ".")
   
   simulation <- list(res = res.mat, # high.dim = res.high,
                      n = n, r.seed = attr(res, "rng"), "commit" = commit)
