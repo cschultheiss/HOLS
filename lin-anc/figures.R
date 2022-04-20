@@ -137,3 +137,61 @@ legend('topright', c(TeX("$\\alpha = 0.05$ cutoff"), "Lingam"), pch = c(1,2))
 # matplot((0:len)/len, TPR2, type = "l", ylim = c(0, 1))
 # points(laa.perf[1,], laa.perf[4,], col = 1:nf)
 # points(lg.perf[1,], lg.perf[3,], col = 1:nf, pch = 2)
+
+folder <- "results/20-Apr-2022 16.03"
+savefolder <- "Figures/patho-unif"
+flz <- list.files(folder)
+
+j <- 4
+zs <- matrix(NA, length(flz), p + 1)
+zs2 <- matrix(NA, length(flz), p + 1)
+z.col <- which(grepl("t.x", colnames(simulation$res)))
+z2.col <- which(grepl("t2.x", colnames(simulation$res)))
+
+i <- 0
+for (file in flz) {
+  i <- i + 1
+  load(paste(folder, "/", file, sep = ""))
+  zs[i, 1] <- simulation$n
+  zs2[i, 1] <- simulation$n
+
+  zs[i, -1] <- apply(abs(simulation$res[,z.col]), 2, mean)
+  zs2[i, -1] <- apply(abs(simulation$res[,z2.col]), 2, mean)
+}
+
+var.ind <- c(1:p)[-j]
+pp <- length(var.ind)
+var.ind.label <- var.ind
+labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind.label, "}$')", sep = "", collapse = ","), ")")))
+ord <- matrix(1:pp, nrow = 2, ncol = 3, byrow = T)
+plotfac <- 4
+pointfrac <- 0.8
+cx <- 0.75
+
+png(paste(savefolder, "/z-and-z.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+matplot(zs2[, 1], zs2[, var.ind + 1], log ="xy", xlab = "n",
+        ylab = "Average absolute z-statistics",
+        main = "''Normal''",
+        pch = 1:pp, col = (1:6)[-5], lwd = 2)
+legend("topleft", ncol = 3, legend = labels[ord][1:pp],
+       pch = (1:pp)[ord], col = (1:6)[-5][ord], pt.lwd = 2)
+which.line <- c(1, 2, 3)
+for (j in which.line){
+  lines(zs2[, 1], sqrt(zs2[, 1]) * zs2[4, j + 1] / sqrt(zs2[4, 1]), lty = 2)
+}
+abline(h = sqrt(2 / pi), lty = 2)
+
+matplot(zs[, 1], zs[, var.ind + 1], log ="xy", xlab = "n",
+        ylab = "Average absolute z-statistics",
+        main = "''Pathological''",
+        pch = 1:pp, col = (1:6)[-5], lwd = 2)
+legend("topleft", ncol = 3, legend = labels[ord][1:pp],
+       pch = (1:pp)[ord], col = (1:6)[-5][ord], pt.lwd = 2)
+which.line <- c(1, 3)
+for (j in which.line){
+  lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
+}
+abline(h = sqrt(2 / pi), lty = 2)
+dev.off()
