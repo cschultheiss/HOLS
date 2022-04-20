@@ -195,3 +195,20 @@ for (j in which.line){
 }
 abline(h = sqrt(2 / pi), lty = 2)
 dev.off()
+
+par <- 2:3
+anc <- 1:3
+nonanc <- (1:p)[-c(j, anc)]
+
+TAR <- matrix(NA, nrow(simulation$res) + 1, length(flz))
+TPR <- TAR
+i <- 0
+for (file in flz) {
+  i <- i + 1
+  load(paste(folder, "/", file, sep = ""))
+  all.z <- simulation$res[,z2.col]
+  zmax <- apply(abs(all.z[,nonanc]), 1, max)
+  lims <- c(sort(zmax), Inf)
+  TAR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,anc]) > lim))
+  TPR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,par]) > lim))
+}
