@@ -142,11 +142,14 @@ folder <- "results/20-Apr-2022 16.03"
 savefolder <- "Figures/patho-unif"
 flz <- list.files(folder)
 
+p <- 6
 j <- 4
 zs <- matrix(NA, length(flz), p + 1)
 zs2 <- matrix(NA, length(flz), p + 1)
 z.col <- which(grepl("t.x", colnames(simulation$res)))
 z2.col <- which(grepl("t2.x", colnames(simulation$res)))
+pv.col <- which(grepl("pv.x", colnames(simulation$res)))
+pv2.col <- which(grepl("pv2.x", colnames(simulation$res)))
 
 i <- 0
 for (file in flz) {
@@ -199,9 +202,16 @@ dev.off()
 par <- 2:3
 anc <- 1:3
 nonanc <- (1:p)[-c(j, anc)]
+wo.j <- function(x, j){
+  x[x >= j] <- x[x >= j] - 1
+  x
+}
+alpha <- 0.05
+alpha.lim <- abs(qnorm(alpha / 2 / (p - 1)))
 
-TAR <- matrix(NA, nrow(simulation$res) + 1, length(flz))
-TPR <- TAR
+TAR <- TPR <- TAR.p <- TPR.p <- matrix(NA, nrow(simulation$res) + 1, length(flz))
+
+alpha.perf <- alpha.perf.p <- matrix(NA, 3, length(flz))
 i <- 0
 for (file in flz) {
   i <- i + 1
@@ -211,4 +221,39 @@ for (file in flz) {
   lims <- c(sort(zmax), Inf)
   TAR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,anc]) > lim))
   TPR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,par]) > lim))
+  alpha.perf[,i] <- c(mean(zmax > alpha.lim), mean(abs(all.z[,anc]) > alpha.lim),
+                      mean(abs(all.z[,par]) > alpha.lim))
+
+  
+  # all.p <- simulation$res[,pv2.col][,-j]
+  all.p <- 2 * pnorm(-abs(all.z[,-j]))
+  # all.p.adj <- t(apply(all.p, 1, p.adjust, method = "holm"))
+  all.p.adj <- t(apply(all.p, 1, holm.uncut))
+  p.min <- apply(all.p.adj[,wo.j(nonanc, j)], 1, min)
+  lims.p <- c(0, sort(p.min))
+  TAR.p[,i] <- sapply(lims.p, function(lim) mean(all.p.adj[,wo.j(anc, j)] < lim))
+  TPR.p[,i] <- sapply(lims.p, function(lim) mean(all.p.adj[,wo.j(par, j)] < lim))
+  alpha.perf.p[,i] <- c(mean(p.min < alpha), mean(all.p.adj[,wo.j(anc, j)] < alpha),
+                        mean(all.p.adj[,wo.j(par, j)] < alpha))
 }
+
+# par(mfrow = c(1,2))
+# matplot((200 :0)/200, TAR, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected ancestors")
+# points(alpha.perf[1,], alpha.perf[2, ], col = 1:5)
+# matplot((200 :0)/200, TPR, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected parents")
+# points(alpha.perf[1,], alpha.perf[3, ], col = 1:5)
+
+labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+
+png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+matplot((0:200)/200, TAR.p, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+        col = (1:p)[-5])
+points(alpha.perf.p[1,], alpha.perf.p[2, ], col = (1:p)[-5], pch = 3)
+legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
+matplot((0:200)/200, TPR.p, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected parents",
+        col = (1:p)[-5])
+points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
+legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
+dev.off()
