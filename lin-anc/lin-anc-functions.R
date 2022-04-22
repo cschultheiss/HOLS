@@ -159,8 +159,3 @@ holm.matrix <- function(pv, cut = TRUE){
   }
   pv
 }
-
-i <- seq_len(lp)
-o <- order(p)
-ro <- order(o)
-pmin(1, cummax((n + 1L - i) * p[o]))[ro]

@@ -74,40 +74,49 @@ for (n in n.vec) {
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "pcalg"), .options.snow = opts) %dorng%{
                  
        psi <- cbind(rnorm(n), rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)),
-                    rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rnorm(n))
+                    rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rnorm(n), rnorm(n))
        
+       a <- 0.7
        x1 <- psi[, 1]
        x2 <- 0.8 * x1 + 0.6 * psi[, 2]
        x3 <- 0.6 * x1 + 0.8 * psi[, 3]
-       x5 <- psi[, 5]
-       ls <- list()
-       l <- 0
-       for (a in c(0.3, 0.7)) {
-         l <- l + 1
-         x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
-         x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 6]
+       x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
+       
+       laa <- list()
+       lg <- list()
+       st <- numeric(4)
+       for (l in 1:2) {
+         x5 <- psi[, 4 + l]
+         x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
          x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-         ls[[l]] <- lin.anc(x, "x4")[[1]]
+         st[l] <- system.time(laa[[l]] <- lin.anc.all(x))[3]
+         st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
        }
+       
+       outmat <- cbind(laa[[1]][[2]], laa[[2]][[2]], t(as(lg[[1]], "amat")), t(as(lg[[2]], "amat")))
+       
+       colnames(outmat) <- paste(rep(c("laa1", "laa2", "lg1", "lg2"), each = p), rep(colnames(x), 4), sep = ".")
 
 
      
      out <- list()
-     out$res <- list(unlist(ls))
+     out$res <- outmat
+     out$time <- st
      out                           
   } 
   toc()
   stopCluster(cl)
-  res.mat <- matrix(unlist(res[,"res"]), byrow = TRUE, nrow = nsim)
-  cn <- paste("x", 1:p, sep="")
-  cn.cross <- cn
-  colnames(res.mat) <- paste(rep(c("t", "pv", "t2", "pv2"), each = p), cn.cross, sep = ".")
-  
-  simulation <- list(res = res.mat, # high.dim = res.high,
+  res.mat <- array(unlist(res[,"res"]), dim = c(p, 4 * p, nsim), dimnames = list(rownames(res[1,"res"][[1]]),
+                   colnames(res[1,"res"][[1]]), NULL))
+  time.mat <- matrix(unlist(res[,"time"]), byrow = TRUE, nrow = nsim)
+  colnames(time.mat) <- c("laa1", "laa2", "lg1", "lg2")
+
+  simulation <- list(res = res.mat, time = time.mat,
                      n = n, r.seed = attr(res, "rng"), "commit" = commit)
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(apply(res.mat, 2, mean))
+  print(apply(res.mat, 1:2, mean))
+  print(apply(time.mat, 2, mean))
 }
 
