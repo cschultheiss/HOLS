@@ -71,7 +71,7 @@ set1 <- function(pvs){
   return(pvs)
 }
 
-find.structure <- function(pvs, alpha = 0.05){
+find.structure <- function(pvs, alpha = 0.05, verbose = FALSE){
   #pv <- as.numeric(pvs)
   if (nrow(pvs) != ncol(pvs)) stop("Bad dimensions")
   # p <- sqrt(length(pv))
@@ -87,7 +87,7 @@ find.structure <- function(pvs, alpha = 0.05){
     pvs.mat <- pvs[loop.vars, loop.vars]
     pvs.sub <- pvs.mat[pvs.mat < alpha]
     new.alpha <- max(pvs.sub)
-    print(paste("Try decreasing alpha from", round(alpha, 3), "to", round(new.alpha, 3)))
+    if(verbose) print(paste("Try decreasing alpha from", round(alpha, 3), "to", round(new.alpha, 3)))
 
     out <- find.structure(pvs.mat, new.alpha)
     anc1[loop.vars, loop.vars] <- out$rec.ancs == 1
@@ -96,18 +96,18 @@ find.structure <- function(pvs, alpha = 0.05){
   }
 }
 
-find.structures <- function(pvs, lims){
+find.structures <- function(pvs, lims, verbose = FALSE){
   nl <- length(lims)
   out <- matrix(nrow = length(lims), ncol = length(pvs))
   for (i in 1:nl){
-    stru <- find.structure(pvs, lims[i])
+    stru <- find.structure(pvs, lims[i], verbose = verbose)
     out[i,] <- stru[[1]]
     if (stru[[2]] < lims[i]) {
       out[(i + 1):nl,] <- rep(stru[[1]], each = nl -i)
       break
     }
   }
-  if(stru[[2]] == max(lims)) print("no decrease necessary")
+  if(stru[[2]] == max(lims) && verbose) print("no decrease necessary")
   out
 }
 
