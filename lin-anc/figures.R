@@ -257,3 +257,24 @@ matplot((0:200)/200, TPR.p, type = "l", xlab = "Type I FWER", ylab ="Fraction of
 points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 dev.off()
+
+z.col <- which(grepl("laa1.", colnames(simulation$res)))
+z <- simulation$res[,z.col,]
+pv <- 2 * pnorm(-abs(z))
+pv.adj <- pv
+pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
+pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
+p.min <- apply(pv.nonanc, 1, min)
+lims <- c(0, sort(unique(p.min)))
+TAR.f <- function(lim) {
+  stru <- pv.adj
+  stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
+  stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
+  pwr <- mean(stru.anc)
+  stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
+  FWER <- mean(apply(stru.nonanc, 1, max))
+  c(FWER, pwr)
+}
+
+TAR <- t(sapply(lims, TAR.f))
+
