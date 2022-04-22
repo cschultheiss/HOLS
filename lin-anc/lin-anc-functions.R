@@ -7,6 +7,7 @@ lin.anc <- function(x, response, multicorr.out.factor = 1, alpha = 0.05, f  = fu
   su <- summary(lm (y ~ ., data = x))
   alpha <- alpha / multicorr.out.factor
   if (multicorr.in) alpha <- alpha / (p - 1)
+  su$coefficients[j+1, 3:4] <- c(0, 1)
   return(list(su$coefficients[-1,3:4], cols[-j][which(su$coefficients[-c(1, j + 1),4] < alpha)]))
 }
 
@@ -143,3 +144,23 @@ lasso.firstq.up <- function (x, y, q, ...)
     m[[take]]
   }
 }
+
+holm.matrix <- function(pv, cut = TRUE){
+  if (nrow(pv) !=  ncol(pv)) stop("Need quadratic input")
+  p <- nrow(pv)
+  i <- c(seq_len(p^2 -p), rep(p^2 -p, p))
+  o <- order(pv)
+  ro <- order(o)
+  if (cut) {
+    pv[] <- pmin(1, cummax((p^2 -p + 1L - i) * pv[o]))[ro]
+  }
+  else {
+    pv[] <- cummax((p^2 -p + 1L - i) * pv[o])[ro]
+  }
+  pv
+}
+
+i <- seq_len(lp)
+o <- order(p)
+ro <- order(o)
+pmin(1, cummax((n + 1L - i) * p[o]))[ro]
