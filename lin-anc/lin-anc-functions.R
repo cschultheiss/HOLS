@@ -89,25 +89,32 @@ find.structure <- function(pvs, alpha = 0.05, verbose = FALSE){
     new.alpha <- max(pvs.sub)
     if(verbose) print(paste("Try decreasing alpha from", round(alpha, 3), "to", round(new.alpha, 3)))
 
-    out <- find.structure(pvs.mat, new.alpha)
+    out <- find.structure(pvs.mat, new.alpha, verbose = verbose)
     anc1[loop.vars, loop.vars] <- out$rec.ancs == 1
     pvs[] <- p.to.anc(anc1)
     return(list(rec.ancs = pvs, alpha = out$alpha))
   }
 }
 
-find.structures <- function(pvs, lims, verbose = FALSE){
+find.structures <- function(pvs, lims, verbose.final = FALSE, verbose = FALSE){
+  su <- sapply(lims, function(lim) sum(c(pvs) < lim))
+  di <- diff(su)
+  wi <- c(0, which(di > 0)) + 1
   nl <- length(lims)
-  out <- matrix(nrow = length(lims), ncol = length(pvs))
-  for (i in 1:nl){
-    stru <- find.structure(pvs, lims[i], verbose = verbose)
-    out[i,] <- stru[[1]]
-    if (stru[[2]] < lims[i]) {
-      out[(i + 1):nl,] <- rep(stru[[1]], each = nl -i)
-      break
-    }
+  nw <- length(wi)
+  wi <- c(wi, nl)
+  out <- array(NA, dim = c(dim(pvs), nl))
+  dimnames(out)[1:2] <- dimnames(pvs)
+  dimnames(out)[[3]] <- lims
+  for (i in 1:nw){
+    stru <- find.structure(pvs, lims[wi[i]], verbose = verbose)
+    out[,,wi[i] : wi[i+1]] <- stru[[1]]
+    # if (stru[[2]] < lims[i] && i < nl) {
+    #   out[, , (i + 1):nl] <- stru[[1]]
+    #   break
+    # }
   }
-  if(stru[[2]] == max(lims) && verbose) print("no decrease necessary")
+  if(verbose.final) print(paste("Used alpha = ", round(stru[[2]], 3), sep = ""))
   out
 }
 
