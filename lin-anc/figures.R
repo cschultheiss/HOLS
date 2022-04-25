@@ -258,53 +258,72 @@ points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 dev.off()
 
-folder <- "results/22-Apr-2022 15.34"
+folder <- "results/25-Apr-2022 10.06"
 savefolder <- "Figures/abc"
 flz <- list.files(folder)
 
-z.col <- which(grepl("laa1.", colnames(simulation$res)))
-lg.col <- which(grepl("lg1.", colnames(simulation$res)))
-p <- length(z.col)
+load(paste(folder, "/", flz[1], sep = ""))
+z.col <- lg.col <- list()
+z.col[[1]] <- which(grepl("laa1.", colnames(simulation$res)))
+lg.col[[1]] <- which(grepl("lg1.", colnames(simulation$res)))
+z.col[[2]] <- which(grepl("laa2.", colnames(simulation$res)))
+lg.col[[2]] <- which(grepl("lg2.", colnames(simulation$res)))
+p <- length(z.col[[1]])
 pmat <- matrix(FALSE, p, p)
 pmat[2, 1] <- pmat[3, 1] <- pmat[4, 2] <- pmat[4, 3] <- pmat[6, 4] <- pmat[6, 5] <- TRUE
 ancmat <- p.to.anc(pmat)
 nsim <- 200
-TAR <- matrix(NA, nsim + 1, 2 * length(flz))
-lg.perf <- matrix(NA, length(flz), 2)
+alpha <- 0.05
 
-i <- 0
-for (file in flz) {
-  i <- i + 1
-  cat("\n", i, "\n")
-  load(paste(folder, "/", file, sep = ""))
-  z <- simulation$res[,z.col,]
-  lg <- simulation$res[,lg.col,]
-  pv <- 2 * pnorm(-abs(z))
-  pv.adj <- pv
-  pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
-  pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
-  p.min <- apply(pv.nonanc, 1, min)
-  lims <- c(0, sort(unique(p.min)))
-  TAR.f <- function(lim) {
-    cat(lim, "..")
-    stru <- pv.adj
-    stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
-    stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
-    pwr <- mean(stru.anc)
-    stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
-    FWER <- mean(apply(stru.nonanc, 1, max))
-    c(FWER, pwr)
+
+
+par(mfrow = c(1, 2))
+for (s in 1:2){
+  TAR <- matrix(NA, nsim + 2, 2 * length(flz))
+  alpha.ind <- integer(length(flz))
+  lg.perf <- matrix(NA, length(flz), 2)
+  i <- 0
+  for (file in flz) {
+    i <- i + 1
+    cat("\n", i, "\n")
+    load(paste(folder, "/", file, sep = ""))
+    z <- simulation$res[,z.col[[s]],]
+    lg <- simulation$res[,lg.col[[s]],]
+    pv <- 2 * pnorm(-abs(z))
+    pv.adj <- pv
+    pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
+    pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
+    p.min <- apply(pv.nonanc, 1, min)
+    lims <- sort(unique(c(0, alpha, p.min)))
+    alpha.ind[i] <- which(lims == alpha)
+    TAR.f <- function(lim) {
+      cat(lim, "..")
+      stru <- pv.adj
+      stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
+      stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
+      pwr <- mean(stru.anc)
+      stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
+      FWER <- mean(apply(stru.nonanc, 1, max))
+      c(FWER, pwr)
+    }
+    lg.rec <- lg
+    lg.rec[] <- apply(lg == 1, 3, p.to.anc)
+    lg.anc <- apply(lg.rec, 3, function(stru) stru[which(ancmat)])
+    lg.pwr <- mean(lg.anc)
+    lg.nonanc <- t(apply(lg.rec, 3, function(stru) stru[which(!ancmat)]))
+    lg.FWER <- mean(apply(lg.nonanc, 1, max))
+    lg.perf[i,] <- c(lg.FWER, lg.pwr)
+    
+    TAR[1:length(lims),c(i, length(flz) + i)] <- t(sapply(lims, TAR.f))
   }
-  lg.rec <- lg
-  lg.rec[] <- apply(lg == 1, 3, p.to.anc)
-  lg.anc <- apply(lg.rec, 3, function(stru) stru[which(ancmat)])
-  lg.pwr <- mean(lg.anc)
-  lg.nonanc <- t(apply(lg.rec, 3, function(stru) stru[which(!ancmat)]))
-  lg.FWER <- mean(apply(lg.nonanc, 1, max))
-  lg.perf[i,] <- c(lg.FWER, lg.pwr)
   
-  TAR[1:length(lims),c(i, length(flz) + i)] <- t(sapply(lims, TAR.f))
+  labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+  matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "l",
+          xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+          col = (1:p)[-5])
+  points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
+         col = (1:p)[-5], pch = 3)
+  points(lg.perf, col = (1:p)[-5], pch = 1)
+  legend('topright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 }
 
-matplot(TAR[,1:5], TAR[,6:10], type = "l", xlim = c(0,1), ylim = c(0,1))
-points(lg.perf, col = 1:5, pch = 3)
