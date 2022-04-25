@@ -258,7 +258,7 @@ points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 dev.off()
 
-folder <- "results/25-Apr-2022 10.06"
+folder <- "results/22-Apr-2022 15.34"
 savefolder <- "Figures/abc"
 flz <- list.files(folder)
 
@@ -278,6 +278,11 @@ alpha <- 0.05
 
 
 par(mfrow = c(1, 2))
+TARs <- list()
+alpha.inds <- list()
+lg.perfs <- list()
+labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+
 for (s in 1:2){
   TAR <- matrix(NA, nsim + 2, 2 * length(flz))
   alpha.ind <- integer(length(flz))
@@ -291,21 +296,19 @@ for (s in 1:2){
     lg <- simulation$res[,lg.col[[s]],]
     pv <- 2 * pnorm(-abs(z))
     pv.adj <- pv
-    pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
+    pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv, cut = FALSE))
     pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
     p.min <- apply(pv.nonanc, 1, min)
     lims <- sort(unique(c(0, alpha, p.min)))
     alpha.ind[i] <- which(lims == alpha)
-    TAR.f <- function(lim) {
-      cat(lim, "..")
-      stru <- pv.adj
-      stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
-      stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
-      pwr <- mean(stru.anc)
-      stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
-      FWER <- mean(apply(stru.nonanc, 1, max))
-      c(FWER, pwr)
-    }
+
+    stru <- array(NA, dim = c(dim(pv.adj)[1:2], length(lims), dim(pv.adj)[3]))
+    stru[] <- apply(pv.adj, 3, find.structures, lims = lims)
+    stru.anc <- apply(stru, 3:4, function(stru) stru[which(ancmat)])
+    pwr <- apply(stru.anc, 2, mean)
+    stru.nonanc <- apply(stru, 3:4, function(stru) stru[which(!ancmat)])
+    FWER <- apply(apply(stru.nonanc, 2:3, max), 1, mean)
+    
     lg.rec <- lg
     lg.rec[] <- apply(lg == 1, 3, p.to.anc)
     lg.anc <- apply(lg.rec, 3, function(stru) stru[which(ancmat)])
@@ -314,11 +317,14 @@ for (s in 1:2){
     lg.FWER <- mean(apply(lg.nonanc, 1, max))
     lg.perf[i,] <- c(lg.FWER, lg.pwr)
     
-    TAR[1:length(lims),c(i, length(flz) + i)] <- t(sapply(lims, TAR.f))
+    TAR[1:length(lims),c(i, length(flz) + i)] <- c(FWER, pwr)
   }
+  # save for convenience
+  TARs[[s]] <- TAR
+  alpha.inds[[s]] <- alpha.ind
+  lg.perfs[[s]] <- lg.perf
   
-  labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
-  matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "l",
+  matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "s",
           xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
           col = (1:p)[-5])
   points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
