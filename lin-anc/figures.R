@@ -258,23 +258,53 @@ points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 dev.off()
 
+folder <- "results/22-Apr-2022 15.34"
+savefolder <- "Figures/abc"
+flz <- list.files(folder)
+
 z.col <- which(grepl("laa1.", colnames(simulation$res)))
-z <- simulation$res[,z.col,]
-pv <- 2 * pnorm(-abs(z))
-pv.adj <- pv
-pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
-pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
-p.min <- apply(pv.nonanc, 1, min)
-lims <- c(0, sort(unique(p.min)))
-TAR.f <- function(lim) {
-  stru <- pv.adj
-  stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
-  stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
-  pwr <- mean(stru.anc)
-  stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
-  FWER <- mean(apply(stru.nonanc, 1, max))
-  c(FWER, pwr)
+lg.col <- which(grepl("lg1.", colnames(simulation$res)))
+p <- length(z.col)
+pmat <- matrix(FALSE, p, p)
+pmat[2, 1] <- pmat[3, 1] <- pmat[4, 2] <- pmat[4, 3] <- pmat[6, 4] <- pmat[6, 5] <- TRUE
+ancmat <- p.to.anc(pmat)
+nsim <- 200
+TAR <- matrix(NA, nsim + 1, 2 * length(flz))
+lg.perf <- matrix(NA, length(flz), 2)
+
+i <- 0
+for (file in flz) {
+  i <- i + 1
+  cat("\n", i, "\n")
+  load(paste(folder, "/", file, sep = ""))
+  z <- simulation$res[,z.col,]
+  lg <- simulation$res[,lg.col,]
+  pv <- 2 * pnorm(-abs(z))
+  pv.adj <- pv
+  pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv))
+  pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
+  p.min <- apply(pv.nonanc, 1, min)
+  lims <- c(0, sort(unique(p.min)))
+  TAR.f <- function(lim) {
+    cat(lim, "..")
+    stru <- pv.adj
+    stru[] <- apply(pv.adj, 3, function(pv) find.structure(pv, lim)$rec.ancs)
+    stru.anc <- apply(stru, 3, function(stru) stru[which(ancmat)])
+    pwr <- mean(stru.anc)
+    stru.nonanc <- t(apply(stru, 3, function(stru) stru[which(!ancmat)]))
+    FWER <- mean(apply(stru.nonanc, 1, max))
+    c(FWER, pwr)
+  }
+  lg.rec <- lg
+  lg.rec[] <- apply(lg == 1, 3, p.to.anc)
+  lg.anc <- apply(lg.rec, 3, function(stru) stru[which(ancmat)])
+  lg.pwr <- mean(lg.anc)
+  lg.nonanc <- t(apply(lg.rec, 3, function(stru) stru[which(!ancmat)]))
+  lg.FWER <- mean(apply(lg.nonanc, 1, max))
+  lg.perf[i,] <- c(lg.FWER, lg.pwr)
+  
+  TAR[1:length(lims),c(i, length(flz) + i)] <- t(sapply(lims, TAR.f))
 }
 
-TAR <- t(sapply(lims, TAR.f))
-
+matplot(TAR[,1:5], TAR[,6:10], type = "l", xlim = c(0,1), ylim = c(0,1))
+points(lg.perf, col = 1:5, pch = 3)
