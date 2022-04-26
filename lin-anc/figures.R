@@ -258,8 +258,8 @@ points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 dev.off()
 
-folder <- "results/22-Apr-2022 15.34"
-savefolder <- "Figures/abc"
+folder <- "results/graph-one-Gauss"
+savefolder <- "Figures/graph-one-Gauss"
 flz <- list.files(folder)
 
 load(paste(folder, "/", flz[1], sep = ""))
@@ -323,13 +323,23 @@ for (s in 1:2){
   TARs[[s]] <- TAR
   alpha.inds[[s]] <- alpha.ind
   lg.perfs[[s]] <- lg.perf
-  
+}
+
+png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+for (s in 1:2){
+  TAR <- TARs[[s]]
+  alpha.ind <- alpha.inds[[s]]
+  lg.perf <- lg.perfs[[s]]
   matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "s",
           xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
           col = (1:p)[-5])
   points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
          col = (1:p)[-5], pch = 3)
   points(lg.perf, col = (1:p)[-5], pch = 1)
-  legend('topright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
+  wi <- switch(s, 1:3, 4:5)
+  where <- switch(s, 'topright', 'bottomright')
+  legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
-
+dev.off()
