@@ -261,6 +261,8 @@ dev.off()
 folder <- "results/graph-one-Gauss"
 savefolder <- "Figures/graph-one-Gauss"
 flz <- list.files(folder)
+grepf <- function(str) grepl("+06", str)
+flz <- flz[which(!sapply(flz, grepf))]
 
 load(paste(folder, "/", flz[1], sep = ""))
 z.col <- lg.col <- list()
@@ -275,9 +277,6 @@ ancmat <- p.to.anc(pmat)
 nsim <- 200
 alpha <- 0.05
 
-
-
-par(mfrow = c(1, 2))
 TARs <- list()
 alpha.inds <- list()
 lg.perfs <- list()
@@ -338,7 +337,7 @@ for (s in 1:2){
   points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
          col = (1:p)[-5], pch = 3)
   points(lg.perf, col = (1:p)[-5], pch = 1)
-  wi <- switch(s, 1:3, 4:5)
+  wi <- switch(s, 1:2, 3:4)
   where <- switch(s, 'topright', 'bottomright')
   legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
