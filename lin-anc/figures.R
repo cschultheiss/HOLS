@@ -138,7 +138,7 @@ legend('topright', c(TeX("$\\alpha = 0.05$ cutoff"), "Lingam"), pch = c(1,2))
 # points(laa.perf[1,], laa.perf[4,], col = 1:nf)
 # points(lg.perf[1,], lg.perf[3,], col = 1:nf, pch = 2)
 
-folder <- "results/20-Apr-2022 16.03"
+folder <- "results/patho-unif"
 savefolder <- "Figures/patho-unif"
 flz <- list.files(folder)
 
@@ -199,6 +199,18 @@ for (j in which.line){
 abline(h = sqrt(2 / pi), lty = 2)
 dev.off()
 
+folder <- "results/27-Apr-2022 15.48"
+savefolder <- "Figures/patho-unif"
+flz <- list.files(folder)
+load(paste(folder, "/", flz[1], sep = ""))
+
+p <- 6
+j <- 4
+
+z.col <- which(grepl("laa1.x", dimnames(simulation$res)[[2]]))
+z2.col <- which(grepl("laa2.x", dimnames(simulation$res)[[2]]))
+
+
 par <- 2:3
 anc <- 1:3
 nonanc <- (1:p)[-c(j, anc)]
@@ -209,14 +221,14 @@ wo.j <- function(x, j){
 alpha <- 0.05
 alpha.lim <- abs(qnorm(alpha / 2 / (p - 1)))
 
-TAR <- TPR <- TAR.p <- TPR.p <- matrix(NA, nrow(simulation$res) + 1, length(flz))
+TAR <- TPR <- TAR.p <- TPR.p <- matrix(NA, dim(simulation$res)[3] + 1, length(flz))
 
 alpha.perf <- alpha.perf.p <- matrix(NA, 3, length(flz))
 i <- 0
 for (file in flz) {
   i <- i + 1
   load(paste(folder, "/", file, sep = ""))
-  all.z <- simulation$res[,z2.col]
+  all.z <- t(simulation$res[4,z.col,])
   zmax <- apply(abs(all.z[,nonanc]), 1, max)
   lims <- c(sort(zmax), Inf)
   TAR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,anc]) > lim))
@@ -245,20 +257,20 @@ for (file in flz) {
 
 labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
 
-png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
-    height = 300 * plotfac, res = 75 * plotfac)
+# png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
+    # height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
-matplot((0:200)/200, TAR.p, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+matplot((0:200)/200, TAR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
         col = (1:p)[-5])
 points(alpha.perf.p[1,], alpha.perf.p[2, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
-matplot((0:200)/200, TPR.p, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected parents",
+matplot((0:200)/200, TPR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected parents",
         col = (1:p)[-5])
 points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
 legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
-dev.off()
+# dev.off()
 
-folder <- "results/graph-one-Gauss"
+folder <- "results/27-Apr-2022 15.48"
 savefolder <- "Figures/graph-one-Gauss"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
@@ -324,8 +336,8 @@ for (s in 1:2){
   lg.perfs[[s]] <- lg.perf
 }
 
-png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
-    height = 300 * plotfac, res = 75 * plotfac)
+# png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
+#     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 for (s in 1:2){
   TAR <- TARs[[s]]
@@ -341,4 +353,4 @@ for (s in 1:2){
   where <- switch(s, 'topright', 'bottomright')
   legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
-dev.off()
+# dev.off()
