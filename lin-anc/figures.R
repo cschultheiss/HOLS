@@ -199,8 +199,8 @@ for (j in which.line){
 abline(h = sqrt(2 / pi), lty = 2)
 dev.off()
 
-folder <- "results/28-Apr-2022 09.58"
-savefolder <- "Figures/patho-unif"
+folder <- "results/anc+graph"
+savefolder <- "Figures/anc+graph"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
 grepf <- function(str) grepl("+06", str)
@@ -268,8 +268,8 @@ pointfrac <- 0.8
 cx <- 0.75
 
 
-# png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
-    # height = 300 * plotfac, res = 75 * plotfac)
+png(paste(savefolder, "/z+ROC.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
         ylab = "Average absolute z-statistics",
@@ -286,13 +286,9 @@ matplot((0:200)/200, TAR.p[,-lf], type = "s", xlab = "Type I FWER", ylab ="Fract
         col = (1:(lf + 1))[-5])
 points(alpha.perf.p[1, -lf], alpha.perf.p[2, -lf], col = (1:(lf + 1))[-5], pch = 3)
 legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
-# matplot((0:200)/200, TPR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected parents",
-#         col = (1:p)[-5])
-# points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
-# legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
-# dev.off()
+dev.off()
 
-folder <- "results/28-Apr-2022 09.58"
+folder <- "results/anc+graph"
 savefolder <- "Figures/anc+graph"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
