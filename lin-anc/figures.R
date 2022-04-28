@@ -199,10 +199,13 @@ for (j in which.line){
 abline(h = sqrt(2 / pi), lty = 2)
 dev.off()
 
-folder <- "results/27-Apr-2022 15.48"
+folder <- "results/28-Apr-2022 09.58"
 savefolder <- "Figures/patho-unif"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
+grepf <- function(str) grepl("+06", str)
+flz <- flz[which(!sapply(flz, grepf))]
+lf <- length(flz)
 
 p <- 6
 j <- 4
@@ -221,9 +224,11 @@ wo.j <- function(x, j){
 alpha <- 0.05
 alpha.lim <- abs(qnorm(alpha / 2 / (p - 1)))
 
-TAR <- TPR <- TAR.p <- TPR.p <- matrix(NA, dim(simulation$res)[3] + 1, length(flz))
+TAR <- TPR <- TAR.p <- TPR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
+mean.z <- matrix(NA, length(flz), p)
 
-alpha.perf <- alpha.perf.p <- matrix(NA, 3, length(flz))
+
+alpha.perf <- alpha.perf.p <- matrix(NA, 3, lf)
 i <- 0
 for (file in flz) {
   i <- i + 1
@@ -235,6 +240,9 @@ for (file in flz) {
   TPR[,i] <- sapply(lims, function(lim) mean(abs(all.z[,par]) > lim))
   alpha.perf[,i] <- c(mean(zmax > alpha.lim), mean(abs(all.z[,anc]) > alpha.lim),
                       mean(abs(all.z[,par]) > alpha.lim))
+  
+  mean.z[i, 1] <- simulation$n
+  mean.z[i, -1] <- apply(abs(all.z[,-j]), 2, mean)
 
   
   # all.p <- simulation$res[,pv2.col][,-j]
@@ -249,29 +257,43 @@ for (file in flz) {
                         mean(all.p.adj[,wo.j(par, j)] < alpha))
 }
 
-# par(mfrow = c(1,2))
-# matplot((200 :0)/200, TAR, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected ancestors")
-# points(alpha.perf[1,], alpha.perf[2, ], col = 1:5)
-# matplot((200 :0)/200, TPR, type = "l", xlab = "Type I FWER", ylab ="Fraction of detected parents")
-# points(alpha.perf[1,], alpha.perf[3, ], col = 1:5)
-
+var.ind <- c(1:p)[-j]
+pp <- length(var.ind)
+var.ind.label <- var.ind
+labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind.label, "}$')", sep = "", collapse = ","), ")")))
 labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+ord <- matrix(1:pp, nrow = 2, ncol = 3, byrow = T)
+plotfac <- 4
+pointfrac <- 0.8
+cx <- 0.75
+
 
 # png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
     # height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
-matplot((0:200)/200, TAR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
-        col = (1:p)[-5])
-points(alpha.perf.p[1,], alpha.perf.p[2, ], col = (1:p)[-5], pch = 3)
-legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
-matplot((0:200)/200, TPR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected parents",
-        col = (1:p)[-5])
-points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
-legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
+matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
+        ylab = "Average absolute z-statistics",
+        pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2)
+legend("topleft", ncol = 3, legend = labels[ord][1:pp],
+       pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
+which.line <- c(1: 3)
+for (j in which.line){
+  lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, j + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
+}
+abline(h = sqrt(2 / pi), lty = 2, col =" grey")
+
+matplot((0:200)/200, TAR.p[,-lf], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+        col = (1:(lf + 1))[-5])
+points(alpha.perf.p[1, -lf], alpha.perf.p[2, -lf], col = (1:(lf + 1))[-5], pch = 3)
+legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
+# matplot((0:200)/200, TPR.p, type = "s", xlab = "Type I FWER", ylab ="Fraction of detected parents",
+#         col = (1:p)[-5])
+# points(alpha.perf.p[1,], alpha.perf.p[3, ], col = (1:p)[-5], pch = 3)
+# legend('bottomright', col = (1:p)[-5], ncol = 1, lwd = 2, legend = labels.roc, lty = 1:(p-1))
 # dev.off()
 
-folder <- "results/27-Apr-2022 15.48"
-savefolder <- "Figures/graph-one-Gauss"
+folder <- "results/28-Apr-2022 09.58"
+savefolder <- "Figures/anc+graph"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
 flz <- flz[which(!sapply(flz, grepf))]
@@ -336,8 +358,8 @@ for (s in 1:2){
   lg.perfs[[s]] <- lg.perf
 }
 
-# png(paste(savefolder, "/ROC-holm.png", sep = ""), width = 600 * plotfac,
-#     height = 300 * plotfac, res = 75 * plotfac)
+png(paste(savefolder, "/ROC-graph.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 for (s in 1:2){
   TAR <- TARs[[s]]
@@ -350,7 +372,7 @@ for (s in 1:2){
          col = (1:p)[-5], pch = 3)
   points(lg.perf, col = (1:p)[-5], pch = 1)
   wi <- switch(s, 1:2, 3:4)
-  where <- switch(s, 'topright', 'bottomright')
+  where <- switch(s, 'bottomright', 'bottomright')
   legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
-# dev.off()
+dev.off()
