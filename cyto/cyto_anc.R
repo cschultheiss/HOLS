@@ -87,3 +87,25 @@ for (env in envs){
   all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
   all.analysis[[env.a]]$pval.comb.filtered <- pval.comb.filtered
 }
+
+pas <- paste("all.analysis[[", envs, "]]$pval.comb.filtered", collapse = ", ", sep = "")
+pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
+
+sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm))", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered))", sep = "", collapse = " + ")))
+sums.filtered.sign <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered) & all.analysis[[", envs, "]]$pval.comb.filtered < 0.05 / 136 )", sep = "", collapse = " + ")))
+pvals <- pval.min[!is.na(pval.min)]
+pvals <- pval.min[!is.na(pval.min)]
+sums <- sums[!is.na(pval.min)]
+sums.filtered <- sums.filtered[!is.na(pval.min)]
+sums.filtered.sign <- sums.filtered.sign[!is.na(pval.min)]
+ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
+ord <- order(pvals)
+
+for (i in 1:length(sums)){
+  cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
+  cat(" & ")
+  cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", sums.filtered.sign[ord[i]], " & ", pvals[ord[i]])
+  cat(paste("\\", "\\", sep=""))
+  cat("\n")
+}
