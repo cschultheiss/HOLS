@@ -1,5 +1,5 @@
 library(readxl)
-source('~/Documents/ETH/PhD/HOLS/cyto/cyto_functions.R')
+source('cyto/cyto_functions.R')
 options(digits = 2)
 
 folder <- "Protein-signal"

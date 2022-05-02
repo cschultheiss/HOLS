@@ -1,5 +1,6 @@
 library(readxl)
-source('~/Documents/ETH/PhD/HOLS/cyto/cyto_functions.R')
+source('cyto/cyto_functions.R')
+source('lin-anc/lin-anc-functions.R')
 options(digits = 2)
 
 folder <- "Protein-signal"
@@ -51,19 +52,17 @@ envs <- (1:9)[-2]
 log <- TRUE
 all.analysis <- list()
 for (env in envs){
-  env.a <- env
-  if (length(env) > 1) env.a <- paste(env, collapse = ", ")
   all.analysis[[env]] <- list()
   pval.lm <- matrix(NA, length(vars), length(vars))
   rownames(pval.lm) <- colnames(pval.lm) <- vars
   pval.HOLS <- pval.lm
   dat.env <- dat[dat$env == env, -12]
   laa <- lin.anc.all(log(dat.env))
-  lg <- lingam(log(dat.env))
   pv <- 2 * pnorm(-abs(laa[[2]]))
   pvc <- pv
   pvc <- holm.matrix(pv)
   stru <- find.structure(pvc)$rec.ancs == 1
+
   for (var in vars){
     cat(var)
     cat(":  ")
@@ -72,7 +71,7 @@ for (env in envs){
     cat("   ")
     if (length(preds) > 0){
       form <- eval(paste(var, "~", paste(preds, collapse = " + ")))
-      fit <- lm(form, data = log(dat[dat$env %in% env,]))
+      fit <- lm(form, data = log(dat.env))
       hc <- cyto.HOLS(preds, var, env, log = log)
       cat(" beta.OLS:", hc$beta.OLS)
       cat(" pval: ", hc$pval)
@@ -83,9 +82,9 @@ for (env in envs){
   }
   pval.comb.filtered <- pval.lm
   pval.comb.filtered[pval.HOLS < 0.05] <- NA
-  all.analysis[[env.a]]$pval.lm <- pval.lm
-  all.analysis[[env.a]]$pval.HOLS <- pval.HOLS
-  all.analysis[[env.a]]$pval.comb.filtered <- pval.comb.filtered
+  all.analysis[[env]]$pval.lm <- pval.lm
+  all.analysis[[env]]$pval.HOLS <- pval.HOLS
+  all.analysis[[env]]$pval.comb.filtered <- pval.comb.filtered
 }
 
 pas <- paste("all.analysis[[", envs, "]]$pval.comb.filtered", collapse = ", ", sep = "")
