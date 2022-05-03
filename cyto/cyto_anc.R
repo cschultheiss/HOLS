@@ -91,8 +91,9 @@ pas <- paste("all.analysis[[", envs, "]]$pval.comb.filtered", collapse = ", ", s
 pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
 
 sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm))", sep = "", collapse = " + ")))
+ntests <- sum(sums)
 sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered))", sep = "", collapse = " + ")))
-sums.filtered.sign <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered) & all.analysis[[", envs, "]]$pval.comb.filtered < 0.05 / 136 )", sep = "", collapse = " + ")))
+sums.filtered.sign <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.comb.filtered) & all.analysis[[", envs, "]]$pval.comb.filtered < 0.05 /", ntests,  ")", sep = "", collapse = " + ")))
 pvals <- pval.min[!is.na(pval.min)]
 pvals <- pval.min[!is.na(pval.min)]
 sums <- sums[!is.na(pval.min)]
