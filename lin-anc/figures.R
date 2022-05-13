@@ -204,7 +204,7 @@ savefolder <- "Figures/anc+graph"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
 grepf <- function(str) grepl("+06", str)
-flz <- flz[which(!sapply(flz, grepf))]
+# flz <- flz[which(!sapply(flz, grepf))]
 lf <- length(flz)
 
 p <- 6
@@ -268,14 +268,14 @@ pointfrac <- 0.8
 cx <- 0.75
 
 
-png(paste(savefolder, "/z+ROC.png", sep = ""), width = 600 * plotfac,
+png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
         ylab = "Average absolute z-statistics",
-        pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2)
-legend("topleft", ncol = 3, legend = labels[ord][1:pp],
-       pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
+        pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2, las = 1)
+# legend("topleft", ncol = 3, legend = labels[ord][1:pp],
+       # pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
 which.line <- c(1: 3)
 for (j in which.line){
   lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, j + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
@@ -283,9 +283,9 @@ for (j in which.line){
 abline(h = sqrt(2 / pi), lty = 2, col =" grey")
 
 matplot((0:200)/200, TAR.p[,-lf], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
-        col = (1:(lf + 1))[-5])
+        col = (1:(lf + 1))[-5], las = 1)
 points(alpha.perf.p[1, -lf], alpha.perf.p[2, -lf], col = (1:(lf + 1))[-5], pch = 3)
-legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
+# legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
 dev.off()
 
 folder <- "results/anc+graph"
@@ -354,7 +354,7 @@ for (s in 1:2){
   lg.perfs[[s]] <- lg.perf
 }
 
-png(paste(savefolder, "/ROC-graph.png", sep = ""), width = 600 * plotfac,
+png(paste(savefolder, "/ROC-graph-noleg.png", sep = ""), width = 600 * plotfac,
     height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 for (s in 1:2){
@@ -363,12 +363,12 @@ for (s in 1:2){
   lg.perf <- lg.perfs[[s]]
   matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "s",
           xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
-          col = (1:p)[-5])
+          col = (1:p)[-5], las = 1)
   points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
          col = (1:p)[-5], pch = 3)
-  points(lg.perf, col = (1:p)[-5], pch = 1)
-  wi <- switch(s, 1:2, 3:4)
-  where <- switch(s, 'bottomright', 'bottomright')
-  legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
+  points(lg.perf, col = (1:p)[-5], pch = c(0:2, 5))
+  # wi <- switch(s, 1:2, 3:4)
+  # where <- switch(s, 'bottomright', 'bottomright')
+  # legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
 dev.off()
