@@ -105,7 +105,7 @@ ord <- order(pvals)
 for (i in 1:length(sums)){
   cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
-  cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", sums.filtered.sign[ord[i]], " & ", pvals[ord[i]])
+  cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", sums.filtered.sign[ord[i]], " & ", pmin(ntests * pvals[ord[i]], 1))
   cat(paste("\\", "\\", sep=""))
   cat("\n")
 }
