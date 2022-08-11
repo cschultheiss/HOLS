@@ -1,13 +1,14 @@
 require(latex2exp)
 
 HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NULL, z.plot.ind.label = z.plot.ind, 
-                    conf.ind = NULL, all.ind = NULL,
-                    beta0 = NULL, beta.OLS = NULL, zlims.var = (0.1) * (1.1^(0:60)), colgroups = 1, which.line = NULL){
+                    conf.ind = NULL, all.ind = NULL, beta0 = NULL, beta.OLS = NULL, zlims.var = (0.1) * (1.1^(0:60)),
+                    colgroups = 1, which.line = NULL, ecdf.plot = TRUE, groups = NULL, group.labels = NULL, hd = FALSE){
   flz <- list.files(folder)
   for (char in exclude.chars){
     grepf <- function(str) grepl(char, str)
     flz <- flz[which(!sapply(flz, grepf))]
   }
+  nn <- length(flz)
   
   if(z.plot){
     j <- 0
@@ -24,8 +25,6 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
                            simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
                            simulation$low.dim[,"sigma.hat"], 2, mean)
     }
-    
-    nn <- length(flz)
     
     pp <- length(z.plot.ind)
     labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", z.plot.ind.label, "}$')", sep = "", collapse = ","), ")")))
@@ -104,14 +103,50 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
             ylab = "Average intersection size", col = (1:(nn + 1))[-5], lwd = 2)
     legend('bottomright', col = (1:(nn + 1))[-5], ncol = 1, lwd = 2, legend = labels.rec[1:5], lty = 1:nn)
     mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
-   
+  }
+  
+  if(ecdf.plot){
+    plo <- function(data){
+      var.labels.tex <- eval(parse(text = paste("c(", paste("TeX('ECDF of p-values for $X_", group.labels, "$')", sep = "", collapse = ","), ")")))
+      labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+      qs <- seq(0, 1, 0.01)
+      last <- nn
+      cols <- (1:(nn + 1))[-5]
+      par(mfrow = c(1, length(groups)))
+      i <- 0
+      for (group in groups) {
+        i <- i + 1
+        j <- 0
+        last.new <- nn
+        for (file in flz) {
+          j <- j + 1
+          load(paste(folder, "/", file, sep = ""))
+          pv <- simulation[[data]][,which(colnames(simulation[[data]]) == "pval")]
+          if (j == 1)
+            plot(qs, ecdf(pv[,group])(qs), col = cols[j], xlim = c(0,1), type = "l", lwd = 2, lty = j,
+                 xlab = "p", ylab ="Fn(p)", main = var.labels.tex[i])
+          else if (last.new >= j)
+            lines(qs, ecdf(pv[,group])(qs), col = cols[j], lwd = 2, lty = j)
+          if (last.new == last && ecdf(pv[,group])(qs[2])  == 1) last.new <- j
+        }
+        legend('bottomright', col = cols, lwd = 2, legend = labels.rec[1:last.new], lty = 1:last.new)
+      }
+    }
+    plo("low.dim")
+    if(hd) plo("high.dim.new")
   }
 }
 
-HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = 1:6, z.plot.ind.label = (1:7)[-3], conf.ind = 2:3, all.ind = 1:6, 
-        beta0 = rep(0, 6), beta.OLS = sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0), zlims.var = (0.1) * (1.1^(0:60)), which.line = 2:3)
+# HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = 1:6, z.plot.ind.label = (1:7)[-3], conf.ind = 2:3, all.ind = 1:6, 
+#         beta0 = rep(0, 6), beta.OLS = sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0), zlims.var = (0.1) * (1.1^(0:60)), which.line = 2:3)
+# 
+# HA_plot("results/block independent", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = c(1, 7, 9, 13, 14, 20, 22, 26), conf.ind = 1:13, all.ind = 1:26, 
+#         beta0 = rep(0, 26), beta.OLS = c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
+#                                          -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
+#                                          rep(0, 13)), zlims.var = (0.1) * (1.1^(0:60)), which.line = c(1, 7, 9, 13), colgroups = 2)
 
-HA_plot("results/block independent", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = c(1, 7, 9, 13, 14, 20, 22, 26), conf.ind = 1:13, all.ind = 1:26, 
-        beta0 = rep(0, 26), beta.OLS = c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
-                                         -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
-                                         rep(0, 13)), zlims.var = (0.1) * (1.1^(0:60)), which.line = c(1, 7, 9, 13), colgroups = 2)
+# HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = FALSE, groups = list(2, 3, -c(2,3)), group.labels = c("2", "4", "U"))
+# 
+# HA_plot("results/block independent", exclude.chars = "+07", z.plot = FALSE, groups = list(1, 9, 14:26), group.labels = c("1", "9", "U"))
+
+HA_plot("results/SEM HD", exclude.chars = "+07", z.plot = FALSE, groups = list(2, 3, -c(2,3)), group.labels = c("3", "4", "U"), hd = TRUE)
