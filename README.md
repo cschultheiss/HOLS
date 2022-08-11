@@ -4,10 +4,10 @@ R Software for performing HOLS checks:
 - debias_z3.R : procedures adapted from the debiased Lasso to orthogonalize z_j^3
 
 Create data for figures in [paper](https://arxiv.org/abs/2109.14544) (folder structure shall be adapated to user's needs):
-- Figures 2, 3, 6: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/268c18940cfbdb4ffc8aade09260fe606ebcb2d6)
-- Figure 5: run null_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/e38e8ad8973370ebcc64fbfa128fc1e41357ecb0)
-- Figures 8 + 9: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/429d1d05ccbdc48ef061951e4e165088bc5da88c)
-- Figures 10 - 12: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/40d2fd795b70980083b011fc2c53388019d66675)
+- Figures 2, 3, 6: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/268c18940cfbdb4ffc8aade09260fe606ebcb2d6) (R-version used for the paper: 4.1.0)
+- Figure 5: run null_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/e38e8ad8973370ebcc64fbfa128fc1e41357ecb0) (R-version used for the paper: 4.1.0)
+- Figures 8 + 9: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/429d1d05ccbdc48ef061951e4e165088bc5da88c) (R-version used for the paper: 4.1.1)
+- Figures 10 - 12: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/40d2fd795b70980083b011fc2c53388019d66675) (R-version used for the paper: 4.1.0)
 
 The figures can be obtained with figures_execute.R. Note that the data are stored with time-dependent auto-created folder and file names. To get the figures, either the names or the R-script must be adapted to match eachother.
 
