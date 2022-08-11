@@ -101,14 +101,13 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
     matplot(diff.var/sum(abs(dbeta)), size.var, type = "l", lty = 1:nn,
             xlab = TeX("$||\\beta^{OLS}_{\\hat{U}} - \\beta_{\\hat{U}}||_1 / ||\\beta^{OLS} - \\beta ||_1$"),
             ylab = "Average intersection size", col = (1:(nn + 1))[-5], lwd = 2)
-    legend('bottomright', col = (1:(nn + 1))[-5], ncol = 1, lwd = 2, legend = labels.rec[1:5], lty = 1:nn)
+    legend('bottomright', col = (1:(nn + 1))[-5], ncol = 1, lwd = 2, legend = labels.rec, lty = 1:nn)
     mtext("Partial recovery of U", side = 3, outer = TRUE, line = -3, cex = 1.5)
   }
   
   if(ecdf.plot){
     plo <- function(data){
       var.labels.tex <- eval(parse(text = paste("c(", paste("TeX('ECDF of p-values for $X_", group.labels, "$')", sep = "", collapse = ","), ")")))
-      labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
       qs <- seq(0, 1, 0.01)
       last <- nn
       cols <- (1:(nn + 1))[-5]
@@ -129,6 +128,7 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
             lines(qs, ecdf(pv[,group])(qs), col = cols[j], lwd = 2, lty = j)
           if (last.new == last && ecdf(pv[,group])(qs[2])  == 1) last.new <- j
         }
+        labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:7, "$')", sep = "", collapse = ","), ")")))
         legend('bottomright', col = cols, lwd = 2, legend = labels.rec[1:last.new], lty = 1:last.new)
       }
     }
@@ -137,16 +137,45 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
   }
 }
 
-# HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = 1:6, z.plot.ind.label = (1:7)[-3], conf.ind = 2:3, all.ind = 1:6, 
-#         beta0 = rep(0, 6), beta.OLS = sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0), zlims.var = (0.1) * (1.1^(0:60)), which.line = 2:3)
-# 
-# HA_plot("results/block independent", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = c(1, 7, 9, 13, 14, 20, 22, 26), conf.ind = 1:13, all.ind = 1:26, 
-#         beta0 = rep(0, 26), beta.OLS = c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
-#                                          -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
-#                                          rep(0, 13)), zlims.var = (0.1) * (1.1^(0:60)), which.line = c(1, 7, 9, 13), colgroups = 2)
+HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = TRUE, z.plot.ind = 1:6, z.plot.ind.label = (1:7)[-3], conf.ind = 2:3, all.ind = 1:6,
+        beta0 = rep(0, 6), beta.OLS = sqrt(2.5) * c(0, -1/3, 2/3, 0, 0, 0), zlims.var = (0.1) * (1.1^(0:60)), which.line = 2:3,
+        groups = list(2, 3, -c(2,3)), group.labels = c("2", "4", "U"))
+
+HA_plot("results/block independent", z.plot = TRUE, z.plot.ind = c(1, 7, 9, 13, 14, 20, 22, 26), conf.ind = 1:13, all.ind = 1:26,
+        beta0 = rep(0, 26), beta.OLS = c(0.3046434, -0.08445936, 0.01745333, 0.02742916, 0.1939396, 0.09398516,
+                                         -0.5261166, -0.12003, -0.2272695, 0.03484701, 0.03762141, 0.05294573, 0.1150129,
+                                         rep(0, 13)), zlims.var = (0.1) * (1.1^(0:60)), which.line = c(1, 7, 9, 13), colgroups = 2,
+        groups = list(1, 9, 14:26), group.labels = c("1", "9", "U"))
 
 # HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot = FALSE, groups = list(2, 3, -c(2,3)), group.labels = c("2", "4", "U"))
 # 
 # HA_plot("results/block independent", exclude.chars = "+07", z.plot = FALSE, groups = list(1, 9, 14:26), group.labels = c("1", "9", "U"))
 
 HA_plot("results/SEM HD", exclude.chars = "+07", z.plot = FALSE, groups = list(2, 3, -c(2,3)), group.labels = c("3", "4", "U"), hd = TRUE)
+
+H0_plot <- function(file) {
+  load(file)
+  pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
+  pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")]
+  pval.corr <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.corr")]
+  pval.corrh <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval.corr")]
+  pval.corr.min <- apply(pval.corr, 1, min)
+  pval.corr.minh <- apply(pval.corrh, 1, min)
+  pval.corr.min
+  
+  pl <- ncol(pval)
+  ph <- ncol(pval.h)
+  
+  qs <- seq(0, 1, 0.01)
+  par(mfrow = c(1, 2))
+  plot(qs, ecdf(pval)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
+       xlab = "p", ylab ="Fn(p)", main = TeX(paste("ECDF of p-values for $p=", pl, "$", sep = "")))
+  lines(qs, ecdf(pval.corr.min)(qs), col = 2, lwd = 2, lty = 2)
+  legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
+  plot(qs, ecdf(pval.h)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
+       xlab = "p", ylab ="Fn(p)", main = TeX(paste("ECDF of p-values for $p=", ph, "$", sep = "")))
+  lines(qs, ecdf(pval.corr.minh)(qs), col = 2, lwd = 2, lty = 2)
+  legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
+}
+
+H0_plot("results/mix-Gauss null.RData")
