@@ -12,5 +12,5 @@ Create data for figures in [paper](https://arxiv.org/abs/2109.14544) (folder str
 The figures can be obtained with figures_execute.R. Note that the data are stored with time-dependent auto-created folder and file names. To get the figures, either the names or the R-script must be adapted to match eachother.
 
 
-Create the table for the analys of the Sachs et al. dataset (https://www.science.org/doi/full/10.1126/science.1105809): run cyto_analysis.R on commit https://github.com/cschultheiss/HOLS/tree/bd0b055f14d09aab7bf601aba5014cce26b450c5
+Create the table for the analys of the Sachs et al. dataset (https://www.science.org/doi/full/10.1126/science.1105809): run cyto_analysis.R on this [commit](https://github.com/cschultheiss/HOLS/tree/bd0b055f14d09aab7bf601aba5014cce26b450c5)
 

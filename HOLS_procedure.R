@@ -13,7 +13,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
   # y (vector): response, n dimensional
   # use.Lasso (boolean): if TRUE, the debiased Lasso is used instead of least squares. Must be TRUE if p>=n
   # simulated.pval (boolean): if TRUE, additional p-values are calculated by simulating from global null with Gaussian error
-  # only possible for least squares approach.
+  # only possible for least squares approach. Under the assumed model, they are more precise if n is low an nsim is high
   # center (boolean): if TRUE, x and y are centered, i.e., implicitely a intercept is added to the model
   # standardize: if TRUE the columns of x are standardized
   # multiplecorr.method (character): should be "sim" or a method from stats::p.adjust
