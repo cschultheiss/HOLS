@@ -7,6 +7,40 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
                        standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
                        return.z = FALSE, return.w = FALSE, debias.z3 = FALSE, z3tilde = NULL,
                        return.z3tilde = FALSE, return.changed = FALSE, verb = FALSE, ...){
+  # function to apply the HOLS check
+  # Input
+  # x (matrix or vector): covariates, n x p dimensional
+  # y (vector): response, n dimensional
+  # use.Lasso (boolean): if TRUE, the debiased Lasso is used instead of least squares. Must be TRUE if p>=n
+  # simulated.pval (boolean): if TRUE, additional p-values are calculated by simulating from global null with Gaussian error
+  # only possible for least squares approach.
+  # center (boolean): if TRUE, x and y are centered, i.e., implicitely a intercept is added to the model
+  # standardize: if TRUE the columns of x are standardized
+  # multiplecorr.method (character): should be "sim" or a method from stats::p.adjust
+  # nsim (scalar, integer): number of simulations to calculate the simulated p-values or the simulated multiplicity correction
+  # lasso.proj.out (list): if the debiased was called before, this result can be reused to speed up
+  # return.z (boolean): if TRUE, the estimate of z is returned
+  # return.w (boolean): if TRUE, the estimate of w is returned
+  # debias.z3 (boolean): if TRUE, z^3 is additionally orthogonalised as suggested in the paper
+  # z3tilde (matrix): could provide orthogonalised z^3 if calculated before
+  # return.z3tilde (boolean): if TRUE, orthogonalised z^3 is returned
+  # return.changed (boolean): if TRUE, number of covariate for which z_j^3 differs from orthogonalised z_j^3 is reported
+  # Output
+  # beta.OLS (vector): estimates of beta^{OLS}, p dimensional
+  # beta.HOLS (vector): estimates of beta^{HOLS}, p dimensional
+  # sd.scale (vector): estimates of the per covariate error scaling, p dimensional
+  # sigma.hat (scalar): estimate of the error standard deviation
+  # pval (vector): raw p-values, p dimensional
+  # pval.corr (vector): multiplicity corrected p-values, p dimensional
+  # Optional output
+  # z (matrix): estimate of z, n x p dimensional
+  # w (matrix): estimate of w, n x p dimensional
+  # z3tiled (matrix): estimate of orthogonalised z^3, n x p dimensional
+  # changed (scalar, integer): number of covariate for which z_j^3 differs from orthogonalised z_j^3
+  # pval.glob (scalar): only provided if use.Lasso = FALSE, based on a chi-squared test for beta^{HOLS} - beta^{OLS}
+  # pval.sim (vector): p-values based on distribution of z-statistics simulated from global null,  p dimensional
+  # pval.corr.sim (vector): according multiplicity corrected p-values, p dimensional
+  # pval.glob.sim (scalar): according p-value based on distribution of chi-squared statistics simulated from global null
   
   if (is.vector(x)) x <- matrix(x, ncol = 1)
   n <- dim(x)[1]
@@ -60,6 +94,7 @@ HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center =
       # formula for solve(crossprod(x_{-j})) using solve(crossprod(x))
       xtx.sub.inv <- xtx.inv[-j, -j] - tcrossprod(xtx.inv[-j, j])/d[j]
       xtx.sub.inv.tx <- xtx.sub.inv %*% t(x[,-j])
+      # write as a function to avoid storing n x n matrix P_j
       P_j <- function(y) y - x[,-j] %*% (xtx.sub.inv.tx%*%y) 
       # P_j <- diag(n) - x[,-j] %*% xtx.sub.inv %*% t(x[,-j])
 
