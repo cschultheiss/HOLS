@@ -75,7 +75,7 @@ for (n in n.vec) {
                  out <- list()
                  
                  # low-dimensional
-                 out$low.dim <- HOLS.check(x.sub, y, simulated.pval = FALSE)
+                 out$low.dim <- HOLS.check(x.sub, y, simulated.pval = FALSE, center = FALSE)
                         
                  out                           
                }

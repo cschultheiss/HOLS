@@ -38,7 +38,7 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7)
+n.vec <- c(1e2, 1e3, 1e4, 1e5, 1e6)
 p <- 7
 p2 <- 6
 beta <- rep(0, p)
@@ -78,7 +78,7 @@ for (n in n.vec) {
                  out <- list()
                  
                  # low-dimensional
-                 out$low.dim <- HOLS.check(x.sub[, -3], y, simulated.pval = FALSE)
+                 out$low.dim <- HOLS.check(x.sub[, -3], y, simulated.pval = FALSE, center = FALSE)
                  
                  out                           
                }
