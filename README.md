@@ -3,7 +3,7 @@ R Software for performing HOLS checks:
 - HOLS_procedure.R : implementation of the HOLS check
 - debias_z3.R : procedures adapted from the debiased Lasso to orthogonalize z_j^3
 
-Create data for figures in [paper](https://arxiv.org/abs/2109.14544) (folder structure shall be adapated to user's needs):
+Create data for figures in paper (folder structure shall be adapated to user's needs):
 - Figures 2, 3, 6: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/268c18940cfbdb4ffc8aade09260fe606ebcb2d6) (R-version used for the paper: 4.1.0)
 - Figure 5: run null_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/e38e8ad8973370ebcc64fbfa128fc1e41357ecb0) (R-version used for the paper: 4.1.0)
 - Figures 8 + 9: run HA_simulation.R on this [commit](https://github.com/cschultheiss/HOLS/tree/429d1d05ccbdc48ef061951e4e165088bc5da88c) (R-version used for the paper: 4.1.1)
