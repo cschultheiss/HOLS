@@ -97,7 +97,6 @@ ord <- order(pvals)
 for (i in 1:length(sums)){
   cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
-  # cat(sums[ord[i]], " & ", sums.filtered[ord[i]], " & ", pvals[ord[i]])
   cat(sums.filtered[ord[i]], " & ", pvals[ord[i]])
   cat(paste("\\", "\\", sep=""))
   cat("\n")
