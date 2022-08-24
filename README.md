@@ -12,4 +12,4 @@ Create data for figures in paper (folder structure shall be adapated to user's n
 The figures can be obtained with figures_execute.R. Note that the data are stored with time-dependent auto-created folder and file names. To get the figures, either the names or the R-script must be adapted to match eachother.
 
 
-Create the table for the analys of the Sachs et al. dataset (https://www.science.org/doi/full/10.1126/science.1105809): run cyto/cyto_table.R
+Create the table for the analys of the Sachs et al. dataset (https://www.science.org/doi/full/10.1126/science.1105809): store the files in a subfolder called Protein-signal, run cyto/cyto_table.R
