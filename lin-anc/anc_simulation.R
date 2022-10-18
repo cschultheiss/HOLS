@@ -74,28 +74,30 @@ for (n in n.vec) {
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "pcalg"), .options.snow = opts) %dorng%{
                  
 
-       psi <- cbind(matrix(runif(n * p, -sqrt(3), sqrt(3)), n), matrix(rnorm(2 * n), n))
-       
-       a <- 0.7
-       x1 <- psi[, 1]
-       x2 <- 0.8 * x1 + 0.6 * psi[, 2]
-       x3 <- 0.6 * x1 + 0.8 * psi[, 3]
-       x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
-       
-       laa <- list()
-       lg <- list()
-       st <- numeric(4)
-       for (l in 1:2) {
-         x5 <- psi[, 3 + 2 * l]
-         x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 4 + 2 * l]
-         x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-         st[l] <- system.time(laa[[l]] <- lin.anc.all(x))[3]
-         st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
-       }
-       
-       outmat <- cbind(laa[[1]][[2]], laa[[2]][[2]], t(as(lg[[1]], "amat")), t(as(lg[[2]], "amat")))
-       
-       colnames(outmat) <- paste(rep(c("laa1", "laa2", "lg1", "lg2"), each = p), rep(colnames(x), 4), sep = ".")
+                 psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
+                              rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), runif(n, -sqrt(3), sqrt(3)),
+                              rnorm(n), rnorm(n))
+                 
+                 a <- 0.7
+                 x1 <- psi[, 1]
+                 x2 <- 0.8 * x1 + 0.6 * psi[, 2]
+                 x3 <- 0.6 * x1 + 0.8 * psi[, 3]
+                 x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
+                 
+                 laa <- list()
+                 lg <- list()
+                 st <- numeric(4)
+                 for (l in 1:2) {
+                   x5 <- psi[, 4 + l]
+                   x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
+                   x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
+                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x))[3]
+                   st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
+                 }
+                 
+                 outmat <- cbind(laa[[1]][[2]], laa[[2]][[2]], t(as(lg[[1]], "amat")), t(as(lg[[2]], "amat")))
+                 
+                 colnames(outmat) <- paste(rep(c("laa1", "laa2", "lg1", "lg2"), each = p), rep(colnames(x), 4), sep = ".")
 
 
      
