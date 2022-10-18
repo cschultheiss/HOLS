@@ -91,7 +91,7 @@ for (n in n.vec) {
                    x5 <- psi[, 4 + l]
                    x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
                    x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x))[3]
+                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) pot(x, 2)))[3]
                    st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
                  }
                  
