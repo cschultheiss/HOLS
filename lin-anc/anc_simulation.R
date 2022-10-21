@@ -76,7 +76,7 @@ for (n in n.vec) {
 
                  psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
                               rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), runif(n, -sqrt(3), sqrt(3)),
-                              rt(n, 50) / sqrt(50/48), rt(n, 50) / sqrt(50/48))
+                              rt(n, 100) / sqrt(100/98), rnorm(n))
                  
                  a <- 0.7
                  x1 <- psi[, 1]
