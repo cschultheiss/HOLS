@@ -76,7 +76,7 @@ for (n in n.vec) {
 
                  psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
                               rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), runif(n, -sqrt(3), sqrt(3)),
-                              rnorm(n), rnorm(n))
+                              rt(n, 50) / sqrt(50/48), rt(n, 50) / sqrt(50/48))
                  
                  a <- 0.7
                  x1 <- psi[, 1]
@@ -91,7 +91,7 @@ for (n in n.vec) {
                    x5 <- psi[, 4 + l]
                    x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
                    x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) sin(x)))[3]
+                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) x^3))[3]
                    st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
                  }
                  
