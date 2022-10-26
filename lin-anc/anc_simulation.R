@@ -46,6 +46,8 @@ seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
 seed.n <- 0
 
+sigm <- function(x) (exp(x)- 1) / (1 + exp(x))
+
 # pmat <- matrix(FALSE, nrow = p, ncol = p)
 # diag(pmat) <- NA
 # pmat[1, 2] <- pmat [2, 4] <- pmat[3, 4] <- pmat[4, 6] <- pmat[5, 6] <- pmat[6, 7] <- TRUE
@@ -76,7 +78,7 @@ for (n in n.vec) {
 
                  psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
                               rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), runif(n, -sqrt(3), sqrt(3)),
-                              rt(n, 100) / sqrt(100/98), rnorm(n))
+                              rnorm(n), rnorm(n))
                  
                  a <- 0.7
                  x1 <- psi[, 1]
@@ -91,7 +93,7 @@ for (n in n.vec) {
                    x5 <- psi[, 4 + l]
                    x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
                    x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) x^3))[3]
+                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) sigm(x / sd(x))))[3]
                    st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
                  }
                  
