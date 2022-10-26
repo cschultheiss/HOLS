@@ -92,9 +92,12 @@ pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
 
 # count number of environments passing HOLS
 sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm.filtered))", sep = "", collapse = " + ")))
+# count number of envrionments passing HOLS and significant in linear model
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm.filtered) & all.analysis[[", envs, "]]$pval.lm.filtered < 0.05 / 136 )", sep = "", collapse = " + ")))
 # store to vectors
 pvals.reported <- pval.min[!is.na(pval.min)]
 sums.reported <- sums[sums > 0]
+sums.filtered.reported <- sums.filtered[sums > 0]
 ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
 # order by p-value
 ord <- order(pvals.reported)
@@ -104,7 +107,7 @@ for (i in 1:length(sums.reported)){
   cat(paste(latex_name(ma[ord[i],2:1]), collapse = " $\\rightarrow$ "))
   cat(" & ")
   # report number of environments and minimum p-value
-  cat(sums.reported[ord[i]], " & ", pvals.reported[ord[i]])
+  cat(sums.reported[ord[i]], " & ", sums.filtered.reported[ord[i]], " & ", pvals.reported[ord[i]])
   cat(paste("\\", "\\", sep=""))
   cat("\n")
 }
