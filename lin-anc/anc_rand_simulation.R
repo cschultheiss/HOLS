@@ -93,7 +93,7 @@ for (n in n.vec) {
                  lg <- list()
                  st <- numeric(4)
                  for (l in 1:2) {
-                   psi[, 5] <- psi[, 4 + l]
+                   psi[, 6] <- psi[, 5 + l]
                    x <- psi[, pers[, gu]] %*% t(As[, , gu])
                    colnames(x) <- paste("x", 1:p, sep = "")
                    st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) x^3))[3]
