@@ -13,6 +13,7 @@ lin.anc <- function(x, response, multicorr.out.factor = 1, alpha = 0.05, f  = fu
 
 lin.anc.all <- function(x, multicorr.out = TRUE, ...){
   p <- ncol(x)
+  if (is.null(colnames(x))) colnames(x) <- paste("x", 1:p, sep = "")
   vars <- colnames(x)
   anc <- list()
   pv <- matrix(NA, p, p)
