@@ -23,7 +23,7 @@ if (save) {
   dir.create(paste("results/", newdir, sep="")) 
 }
 
-nsim <- 200
+nsim <- 20
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -37,32 +37,40 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
-n.vec <- 10^(2:6)
+n.vec <- 10^(3)
 p <- 6
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(42)
 seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
+
+As <- array(0, c(p, p, nsim))
+pers <- matrix(NA, p, nsim)
+for (s in 1:nsim){
+  rd <- randomDAG(p, 0.4, lB = 0.5, uB = 1)
+
+  B <- matrix(0, p , p)
+  for (i in 2:p){
+    for(j in 1:(i-1)){
+      B[i,j] <- max(0, rd@edgeData@data[[paste(j,"|",i, sep="")]]$weight)
+    }
+  }
+  
+  A <- solve(diag(p) - B)
+  for (j in 2:p){
+    varj <- sum(A[j,]^2) - 1
+    if(varj != 0) {
+      B[j,] <- B[j,] / sqrt(varj) * runif(1, sqrt(1/2), sqrt(2))
+      A <- solve(diag(p) - B)
+    }
+  }
+  As[, , s] <- A
+  pers[, s] <- sample.int(p)
+}
 seed.n <- 0
 
 sigm <- function(x) (exp(x)- 1) / (1 + exp(x))
-
-# pmat <- matrix(FALSE, nrow = p, ncol = p)
-# diag(pmat) <- NA
-# pmat[1, 2] <- pmat [2, 4] <- pmat[3, 4] <- pmat[4, 6] <- pmat[5, 6] <- pmat[6, 7] <- TRUE
-# ancmat <- pmat
-# for (j in 1:p){
-#   tested <- integer(0)
-#   an <- which(pmat[, j])
-#   while (length(setdiff(an, tested)) > 0) {
-#     for (k in setdiff(an, tested)) {
-#       an <- unique(c(an, which(pmat[, k])))
-#       tested <- c(tested, k)
-#     }
-#   }
-#   ancmat[an ,j] <- TRUE
-# }
 
 for (n in n.vec) {
   print(n)
@@ -77,23 +85,18 @@ for (n in n.vec) {
                  
 
                  psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
-                              rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), runif(n, -sqrt(3), sqrt(3)),
-                              rnorm(n), rnorm(n))
+                              rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), rnorm(n),
+                              runif(n, -sqrt(3), sqrt(3)), rnorm(n))
                  
-                 a <- 0.7
-                 x1 <- psi[, 1]
-                 x2 <- 0.8 * x1 + 0.6 * psi[, 2]
-                 x3 <- 0.6 * x1 + 0.8 * psi[, 3]
-                 x4 <- (0.5 * x2 + 0.5 * x3 + a * psi[, 4]) / sqrt(0.7^2 + 0.4^2 + 0.3^2 + a^2)
                  
                  laa <- list()
                  lg <- list()
                  st <- numeric(4)
                  for (l in 1:2) {
-                   x5 <- psi[, 4 + l]
-                   x6 <- 0.6 * x4 + 0.6 * x5 + sqrt(0.28) * psi[, 7]
-                   x <- eval(parse(text = paste("cbind(", paste("x", 1:p, sep="", collapse = ","), ")")))
-                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) sigm(x / sd(x))))[3]
+                   psi[, 5] <- psi[, 4 + l]
+                   x <- psi[, pers[, gu]] %*% t(As[, , gu])
+                   colnames(x) <- paste("x", 1:p, sep = "")
+                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) x^3))[3]
                    st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
                  }
                  
@@ -106,6 +109,7 @@ for (n in n.vec) {
      out <- list()
      out$res <- outmat
      out$time <- st
+     out$gu <- gu
      out                           
   } 
   toc()
