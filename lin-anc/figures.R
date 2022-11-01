@@ -372,3 +372,95 @@ for (s in 1:2){
   # legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
 dev.off()
+
+# figures for randomized graph
+folder <- "results/01-Nov-2022 09.47"
+# savefolder <- "Figures/anc+graph"
+flz <- list.files(folder)
+grepf <- function(str) grepl("+06", str)
+# flz <- flz[which(!sapply(flz, grepf))]
+
+load(paste(folder, "/", flz[1], sep = ""))
+z.col <- lg.col <- list()
+z.col[[1]] <- which(grepl("laa1.", colnames(simulation$res)))
+lg.col[[1]] <- which(grepl("lg1.", colnames(simulation$res)))
+z.col[[2]] <- which(grepl("laa2.", colnames(simulation$res)))
+lg.col[[2]] <- which(grepl("lg2.", colnames(simulation$res)))
+p <- length(z.col[[1]])
+
+nsim <- dim(simulation$res)[3]
+alpha <- 0.05
+
+As1 <- As2 <- array(NA, dim(simulation$As))
+As1[abs(simulation$As) > 1e-5] <- 1
+As2[abs(simulation$As) < 1e-5] <- 1
+for (j in 1:p){
+  As1[j ,j, ] <- NA
+}
+
+TARs <- list()
+alpha.inds <- list()
+lg.perfs <- list()
+labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+
+for (s in 1:2){
+  TAR <- matrix(NA, nsim + 2, 2 * length(flz))
+  alpha.ind <- integer(length(flz))
+  lg.perf <- matrix(NA, length(flz), 2)
+  i <- 0
+  for (file in flz) {
+    i <- i + 1
+    cat("\n", i, "\n")
+    load(paste(folder, "/", file, sep = ""))
+    z <- simulation$res[,z.col[[s]],]
+    lg <- simulation$res[,lg.col[[s]],]
+    pv <- 2 * pnorm(-abs(z))
+    pv.adj <- pv
+    pv.adj[] <- apply(pv, 3, function(pv) holm.matrix(pv, cut = FALSE))
+    # pv.nonanc <- t(apply(pv.adj, 3, function(pv) pv[which(!ancmat)]))
+    p.min <- apply(pv.adj * As2, 3, min, na.rm = TRUE)
+    lims <- sort(unique(c(0, alpha, p.min)))
+    alpha.ind[i] <- which(lims == alpha)
+    
+    stru <- stru.anc <- stru.nonanc <- array(NA, dim = c(dim(pv.adj)[1:2], length(lims), nsim))
+    stru[] <- apply(pv.adj, 3, find.structures, lims = lims)
+    for (k in 1:length(lims)){
+      stru.anc[,,k,] <- stru[,,k,] * As1
+      stru.nonanc[,,k,] <- stru[,,k,] * As2
+    }
+    pwr <- apply(stru.anc, 3, mean, na.rm = TRUE)
+    FWER <- apply(apply(stru.nonanc, 3:4, max, na.rm = TRUE), 1, mean)
+    
+    lg.rec <- lg
+    lg.rec[] <- apply(lg == 1, 3, p.to.anc)
+    lg.pwr <- mean(lg.rec * As1, na.rm = TRUE)
+    lg.FWER <- mean(apply(lg.rec * As2, 3, max, na.rm = TRUE))
+    lg.perf[i,] <- c(lg.FWER, lg.pwr)
+    
+    TAR[1:length(lims),c(i, length(flz) + i)] <- c(FWER, pwr)
+  }
+  # save for convenience
+  TARs[[s]] <- TAR
+  alpha.inds[[s]] <- alpha.ind
+  lg.perfs[[s]] <- lg.perf
+}
+
+# png(paste(savefolder, "/ROC-graph-noleg.png", sep = ""), width = 600 * plotfac,
+#     height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+for (s in 1:2){
+  TAR <- TARs[[s]]
+  alpha.ind <- alpha.inds[[s]]
+  lg.perf <- lg.perfs[[s]]
+  matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "s",
+          xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+          col = (1:p)[-5], las = 1)
+  points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
+         col = (1:p)[-5], pch = 3)
+  points(lg.perf, col = (1:p)[-5], pch = c(0:2, 5))
+  lines(c(0.05, 0.05), c(0, 1), col = "gray", lty = 2)
+  # wi <- switch(s, 1:2, 3:4)
+  # where <- switch(s, 'bottomright', 'bottomright')
+  # legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
+}
+# dev.off()
