@@ -117,14 +117,23 @@ for (n in n.vec) {
   res.mat <- array(unlist(res[,"res"]), dim = c(p, 4 * p, nsim), dimnames = list(rownames(res[1,"res"][[1]]),
                    colnames(res[1,"res"][[1]]), NULL))
   time.mat <- matrix(unlist(res[,"time"]), byrow = TRUE, nrow = nsim)
+  ind <- unlist(res[,"gu"])
+  names(ind) <- NULL
   colnames(time.mat) <- c("laa1", "laa2", "lg1", "lg2")
 
   simulation <- list(res = res.mat, time = time.mat,
-                     n = n, r.seed = attr(res, "rng"), "commit" = commit)
+                     n = n, As = As, pers = pers, ind = ind,
+                     r.seed = attr(res, "rng"), "commit" = commit)
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
-  print(apply(res.mat, 1:2, mean))
+  As1 <- As2 <- array(NA, dim(As))
+  As1[abs(As) > 1e-5] <- 1
+  As2[abs(As) < 1e-5] <- 1
+  for (r in 0:3) {
+    print(apply(res.mat[,(1:p) + (r * p), ] * As1[, , ind], 1:2, mean, na.rm = TRUE))
+    print(apply(res.mat[,(1:p) + (r * p), ] * As2[, , ind], 1:2, mean, na.rm = TRUE))
+  }
   print(apply(time.mat, 2, mean))
 }
 
