@@ -391,9 +391,9 @@ p <- length(z.col[[1]])
 nsim <- dim(simulation$res)[3]
 alpha <- 0.05
 
-As1 <- As2 <- array(NA, dim(simulation$As))
-As1[abs(simulation$As) > 1e-5] <- 1
-As2[abs(simulation$As) < 1e-5] <- 1
+As1 <- As2 <- array(NA, dim(As))
+As1[abs(As) > 1e-5] <- 1
+As2[abs(As) < 1e-5] <- 1
 for (j in 1:p){
   As1[j ,j, ] <- NA
 }
@@ -467,7 +467,7 @@ for (s in 1:2){
 
 
 # figures for randomized graph
-folder <- "results/01-Nov-2022 09.47"
+folder <- "results/02-Nov-2022 15.31"
 # savefolder <- "Figures/anc+graph"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
@@ -475,27 +475,35 @@ grepf <- function(str) grepl("+06", str)
 # flz <- flz[which(!sapply(flz, grepf))]
 lf <- length(flz)
 
-p <- 6
-j <- 4
-
 z.col <- which(grepl("laa1.x", dimnames(simulation$res)[[2]]))
 z2.col <- which(grepl("laa2.x", dimnames(simulation$res)[[2]]))
 
+p <- length(z.col)
+nsim <- dim(simulation$res)[3]
+j <- 4
+
+if (any(sapply(flz, function(str) grepl("setup", str)))) {
+  load(paste(folder, "/", flz[lf], sep = ""))
+  As <- setup$As
+  lf <- lf - 1
+} else {
+  As <- simulation$As
+}
 
 alpha <- 0.05
-As1 <- As2 <- array(NA, dim(simulation$As))
-As1[abs(simulation$As) > 1e-5] <- 1
-As2[abs(simulation$As) < 1e-5] <- 1
+As1 <- As2 <- array(NA, dim(As))
+As1[abs(As) > 1e-5] <- 1
+As2[abs(As) < 1e-5] <- 1
 for (l in 1:p){
   As1[l , l, ] <- NA
 }
 
-Bs <- simulation$As
+Bs <- As
 for(i in 1:nsim){
-  Bs[,, i] <- diag(p) - solve(simulation$As[,,i])
+  Bs[,, i] <- diag(p) - solve(As[,,i])
 }
 Bs[abs(Bs) < 1e-5] <- 0
-Bs1 <- Bs2 <- array(NA, dim(simulation$As))
+Bs1 <- Bs2 <- array(NA, dim(As))
 Bs1[abs(Bs) > 1e-5] <- 1
 Bs2[abs(Bs) < 1e-5] <- 1
 
@@ -506,13 +514,13 @@ Bs1j <- t(Bs1[j, ,])[, -j]
 Bs2j <- t(Bs2[j, ,])[, -j]
 
 TAR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
-mean.z <- matrix(NA, length(flz), 5)
+mean.z <- matrix(NA, lf, 5)
 
 
 
 alpha.perf.p <- matrix(NA, 2, lf)
 i <- 0
-for (file in flz) {
+for (file in flz[1:lf]) {
   i <- i + 1
   load(paste(folder, "/", file, sep = ""))
   all.z <- t(simulation$res[j, z.col,])
@@ -560,7 +568,7 @@ for (wl in which.line){
 }
 abline(h = sqrt(2 / pi), lty = 2, col =" grey")
 
-matplot((0:200)/200, TAR.p[,], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+matplot((0:nsim)/nsim, TAR.p[,], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
         col = (1:(lf + 1))[-5], las = 1)
 points(alpha.perf.p[1, ], alpha.perf.p[2, ], col = (1:(lf + 1))[-5], pch = 3)
 abline(v = alpha, lty = 2, col =" grey")
