@@ -486,23 +486,28 @@ alpha <- 0.05
 As1 <- As2 <- array(NA, dim(simulation$As))
 As1[abs(simulation$As) > 1e-5] <- 1
 As2[abs(simulation$As) < 1e-5] <- 1
-for (j in 1:p){
-  As1[j ,j, ] <- NA
+for (l in 1:p){
+  As1[l , l, ] <- NA
 }
 
 As1j <- t(As1[j, ,])[, -j]
 As2j <- t(As2[j, ,])[, -j]
 
 TAR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
-mean.z <- matrix(NA, length(flz), p)
+mean.z <- matrix(NA, length(flz), 3)
 
 
-alpha.perf <- alpha.perf.p <- matrix(NA, 3, lf)
+
+alpha.perf.p <- matrix(NA, 2, lf)
 i <- 0
 for (file in flz) {
   i <- i + 1
   load(paste(folder, "/", file, sep = ""))
   all.z <- t(simulation$res[j, z.col,])
+  
+  mean.z[i, 1] <- simulation$n
+  mean.z[i, 2] <- mean(abs(all.z[,-j] * As1j), na.rm = TRUE)
+  mean.z[i, 3] <- mean(abs(all.z[,-j] * As2j), na.rm = TRUE)
 
   all.p <- 2 * pnorm(-abs(all.z[,-j]))
   all.p.adj <- t(apply(all.p, 1, holm.uncut))
@@ -523,22 +528,23 @@ pointfrac <- 0.8
 cx <- 0.75
 
 
-png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
-    height = 300 * plotfac, res = 75 * plotfac)
+# png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
+#    height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
         ylab = "Average absolute z-statistics",
         pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2, las = 1)
 # legend("topleft", ncol = 3, legend = labels[ord][1:pp],
 # pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
-which.line <- c(1: 3)
-for (j in which.line){
-  lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, j + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
+which.line <- c(1)
+for (wl in which.line){
+  lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, wl + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
 }
 abline(h = sqrt(2 / pi), lty = 2, col =" grey")
 
-matplot((0:200)/200, TAR.p[,-lf], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+matplot((0:200)/200, TAR.p[,], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
         col = (1:(lf + 1))[-5], las = 1)
-points(alpha.perf.p[1, -lf], alpha.perf.p[2, -lf], col = (1:(lf + 1))[-5], pch = 3)
+points(alpha.perf.p[1, ], alpha.perf.p[2, ], col = (1:(lf + 1))[-5], pch = 3)
+abline(v = alpha, lty = 2, col =" grey")
 # legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
-dev.off()
+# dev.off()
