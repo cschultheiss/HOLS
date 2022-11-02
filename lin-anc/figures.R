@@ -464,3 +464,81 @@ for (s in 1:2){
   # legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
 # dev.off()
+
+
+# figures for randomized graph
+folder <- "results/01-Nov-2022 09.47"
+# savefolder <- "Figures/anc+graph"
+flz <- list.files(folder)
+load(paste(folder, "/", flz[1], sep = ""))
+grepf <- function(str) grepl("+06", str)
+# flz <- flz[which(!sapply(flz, grepf))]
+lf <- length(flz)
+
+p <- 6
+j <- 4
+
+z.col <- which(grepl("laa1.x", dimnames(simulation$res)[[2]]))
+z2.col <- which(grepl("laa2.x", dimnames(simulation$res)[[2]]))
+
+
+alpha <- 0.05
+As1 <- As2 <- array(NA, dim(simulation$As))
+As1[abs(simulation$As) > 1e-5] <- 1
+As2[abs(simulation$As) < 1e-5] <- 1
+for (j in 1:p){
+  As1[j ,j, ] <- NA
+}
+
+As1j <- t(As1[j, ,])[, -j]
+As2j <- t(As2[j, ,])[, -j]
+
+TAR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
+mean.z <- matrix(NA, length(flz), p)
+
+
+alpha.perf <- alpha.perf.p <- matrix(NA, 3, lf)
+i <- 0
+for (file in flz) {
+  i <- i + 1
+  load(paste(folder, "/", file, sep = ""))
+  all.z <- t(simulation$res[j, z.col,])
+
+  all.p <- 2 * pnorm(-abs(all.z[,-j]))
+  all.p.adj <- t(apply(all.p, 1, holm.uncut))
+  p.min <- apply(all.p.adj * As2j, 1, min, na.rm = TRUE)
+  lims.p <- c(0, sort(p.min))
+  TAR.p[,i] <- sapply(lims.p, function(lim) mean(all.p.adj * As1j < lim, na.rm = TRUE))
+  alpha.perf.p[,i] <- c(mean(p.min < alpha), mean(all.p.adj * As1j < alpha, na.rm = TRUE))
+}
+
+var.ind <- c(1:p)[-j]
+pp <- length(var.ind)
+var.ind.label <- var.ind
+labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", var.ind.label, "}$')", sep = "", collapse = ","), ")")))
+labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
+ord <- matrix(1:pp, nrow = 2, ncol = 3, byrow = T)
+plotfac <- 4
+pointfrac <- 0.8
+cx <- 0.75
+
+
+png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
+par(mfrow = c(1,2))
+matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
+        ylab = "Average absolute z-statistics",
+        pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2, las = 1)
+# legend("topleft", ncol = 3, legend = labels[ord][1:pp],
+# pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
+which.line <- c(1: 3)
+for (j in which.line){
+  lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, j + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
+}
+abline(h = sqrt(2 / pi), lty = 2, col =" grey")
+
+matplot((0:200)/200, TAR.p[,-lf], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
+        col = (1:(lf + 1))[-5], las = 1)
+points(alpha.perf.p[1, -lf], alpha.perf.p[2, -lf], col = (1:(lf + 1))[-5], pch = 3)
+# legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
+dev.off()
