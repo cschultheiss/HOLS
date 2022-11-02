@@ -490,11 +490,23 @@ for (l in 1:p){
   As1[l , l, ] <- NA
 }
 
+Bs <- simulation$As
+for(i in 1:nsim){
+  Bs[,, i] <- diag(p) - solve(simulation$As[,,i])
+}
+Bs[abs(Bs) < 1e-5] <- 0
+Bs1 <- Bs2 <- array(NA, dim(simulation$As))
+Bs1[abs(Bs) > 1e-5] <- 1
+Bs2[abs(Bs) < 1e-5] <- 1
+
 As1j <- t(As1[j, ,])[, -j]
 As2j <- t(As2[j, ,])[, -j]
 
+Bs1j <- t(Bs1[j, ,])[, -j]
+Bs2j <- t(Bs2[j, ,])[, -j]
+
 TAR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
-mean.z <- matrix(NA, length(flz), 3)
+mean.z <- matrix(NA, length(flz), 5)
 
 
 
@@ -506,8 +518,14 @@ for (file in flz) {
   all.z <- t(simulation$res[j, z.col,])
   
   mean.z[i, 1] <- simulation$n
+  # ancestors
   mean.z[i, 2] <- mean(abs(all.z[,-j] * As1j), na.rm = TRUE)
-  mean.z[i, 3] <- mean(abs(all.z[,-j] * As2j), na.rm = TRUE)
+  # parents
+  mean.z[i, 3] <- mean(abs(all.z[,-j] * Bs1j), na.rm = TRUE)
+  # non-parental ancestors
+  mean.z[i, 4] <- mean(abs(all.z[,-j] * As1j * Bs2j), na.rm = TRUE)
+  # non-ancestors
+  mean.z[i, 5] <- mean(abs(all.z[,-j] * As2j), na.rm = TRUE)
 
   all.p <- 2 * pnorm(-abs(all.z[,-j]))
   all.p.adj <- t(apply(all.p, 1, holm.uncut))
@@ -536,7 +554,7 @@ matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
         pch = 1:pp, col = (1:(lf + 1))[-5], lwd = 2, las = 1)
 # legend("topleft", ncol = 3, legend = labels[ord][1:pp],
 # pch = (1:pp)[ord], col = (1:(lf + 1))[-5][ord], pt.lwd = 2)
-which.line <- c(1)
+which.line <- c(1:3)
 for (wl in which.line){
   lines(mean.z[, 1], sqrt(mean.z[, 1]) * mean.z[4, wl + 1] / sqrt(mean.z[4, 1]), lty = 2, col = "grey")
 }
@@ -546,5 +564,6 @@ matplot((0:200)/200, TAR.p[,], type = "s", xlab = "Type I FWER", ylab ="Fraction
         col = (1:(lf + 1))[-5], las = 1)
 points(alpha.perf.p[1, ], alpha.perf.p[2, ], col = (1:(lf + 1))[-5], pch = 3)
 abline(v = alpha, lty = 2, col =" grey")
+
 # legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
 # dev.off()
