@@ -68,9 +68,10 @@ for (s in 1:nsim){
   As[, , s] <- A
   pers[, s] <- sample.int(p)
 }
+setup <- list(As = As, pers = pers)
+resname <- paste0("setup ", format(Sys.time(), "%d-%b-%Y %H.%M"))
+if (save) save(setup, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
 seed.n <- 0
-
-sigm <- function(x) (exp(x)- 1) / (1 + exp(x))
 
 for (n in n.vec) {
   print(n)
@@ -122,7 +123,7 @@ for (n in n.vec) {
   colnames(time.mat) <- c("laa1", "laa2", "lg1", "lg2")
 
   simulation <- list(res = res.mat, time = time.mat,
-                     n = n, As = As, pers = pers, ind = ind,
+                     n = n, ind = ind,
                      r.seed = attr(res, "rng"), "commit" = commit)
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
