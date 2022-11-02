@@ -379,6 +379,7 @@ folder <- "results/01-Nov-2022 09.47"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
 # flz <- flz[which(!sapply(flz, grepf))]
+lf <- length(flz)
 
 load(paste(folder, "/", flz[1], sep = ""))
 z.col <- lg.col <- list()
@@ -390,6 +391,14 @@ p <- length(z.col[[1]])
 
 nsim <- dim(simulation$res)[3]
 alpha <- 0.05
+
+if (any(sapply(flz, function(str) grepl("setup", str)))) {
+  load(paste(folder, "/", flz[lf], sep = ""))
+  As <- setup$As
+  lf <- lf - 1
+} else {
+  As <- simulation$As
+}
 
 As1 <- As2 <- array(NA, dim(As))
 As1[abs(As) > 1e-5] <- 1
@@ -404,11 +413,11 @@ lg.perfs <- list()
 labels.roc <- eval(parse(text = paste("c(", paste("TeX('$n=10^", 2:6, "$')", sep = "", collapse = ","), ")")))
 
 for (s in 1:2){
-  TAR <- matrix(NA, nsim + 2, 2 * length(flz))
-  alpha.ind <- integer(length(flz))
-  lg.perf <- matrix(NA, length(flz), 2)
+  TAR <- matrix(NA, nsim + 2, 2 * lf)
+  alpha.ind <- integer(lf)
+  lg.perf <- matrix(NA, lf, 2)
   i <- 0
-  for (file in flz) {
+  for (file in flz[1:lf]) {
     i <- i + 1
     cat("\n", i, "\n")
     load(paste(folder, "/", file, sep = ""))
@@ -437,7 +446,7 @@ for (s in 1:2){
     lg.FWER <- mean(apply(lg.rec * As2, 3, max, na.rm = TRUE))
     lg.perf[i,] <- c(lg.FWER, lg.pwr)
     
-    TAR[1:length(lims),c(i, length(flz) + i)] <- c(FWER, pwr)
+    TAR[1:length(lims),c(i, lf + i)] <- c(FWER, pwr)
   }
   # save for convenience
   TARs[[s]] <- TAR
@@ -452,10 +461,10 @@ for (s in 1:2){
   TAR <- TARs[[s]]
   alpha.ind <- alpha.inds[[s]]
   lg.perf <- lg.perfs[[s]]
-  matplot(TAR[,1:length(flz)], TAR[,length(flz) + (1:length(flz))], type = "s",
+  matplot(TAR[,1:lf], TAR[,lf + (1:lf)], type = "s",
           xlim = c(0,1), ylim = c(0,1), xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
           col = (1:p)[-5], las = 1)
-  points(diag(TAR[alpha.ind,1:length(flz)]), diag(TAR[alpha.ind,length(flz) + (1:length(flz))]),
+  points(diag(TAR[alpha.ind,1:lf]), diag(TAR[alpha.ind,lf + (1:lf)]),
          col = (1:p)[-5], pch = 3)
   points(lg.perf, col = (1:p)[-5], pch = c(0:2, 5))
   lines(c(0.05, 0.05), c(0, 1), col = "gray", lty = 2)
