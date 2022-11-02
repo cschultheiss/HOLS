@@ -23,7 +23,7 @@ if (save) {
   dir.create(paste("results/", newdir, sep="")) 
 }
 
-nsim <- 200
+nsim <- 1000
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
