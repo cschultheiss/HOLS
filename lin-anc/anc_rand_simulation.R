@@ -48,7 +48,7 @@ print(seed.vec) # 3588 3052 2252 5257 8307
 As <- array(0, c(p, p, nsim))
 pers <- matrix(NA, p, nsim)
 for (s in 1:nsim){
-  rd <- randomDAG(p, 0.4, lB = 0.5, uB = 1)
+  rd <- randomDAG(p, 5/14, lB = 0.5, uB = 1)
 
   B <- matrix(0, p , p)
   for (i in 2:p){
@@ -56,6 +56,10 @@ for (s in 1:nsim){
       B[i,j] <- max(0, rd@edgeData@data[[paste(j,"|",i, sep="")]]$weight)
     }
   }
+  
+  pers[, s] <- sample.int(p)
+  gauss.ind <- which(pers[, s] %in% c(5,6))
+  B[max(gauss.ind), min(gauss.ind)] <- runif(1, 0.5, 1)
   
   A <- solve(diag(p) - B)
   for (j in 2:p){
@@ -66,7 +70,6 @@ for (s in 1:nsim){
     }
   }
   As[, , s] <- A
-  pers[, s] <- sample.int(p)
 }
 setup <- list(As = As, pers = pers)
 resname <- paste0("setup ", format(Sys.time(), "%d-%b-%Y %H.%M"))
