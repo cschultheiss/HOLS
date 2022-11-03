@@ -1,4 +1,5 @@
 require(latex2exp)
+source("lin-anc/lin-anc-functions.R")
 
 folder <- "results/06-Apr-2022 17.19"
 savefolder <- "Figures/abc"
@@ -374,8 +375,8 @@ for (s in 1:2){
 dev.off()
 
 # figures for randomized graph
-folder <- "results/01-Nov-2022 09.47"
-# savefolder <- "Figures/anc+graph"
+folder <- "results/rand-graph1000"
+savefolder <- "Figures/rand-graph1000"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
 # flz <- flz[which(!sapply(flz, grepf))]
@@ -454,8 +455,8 @@ for (s in 1:2){
   lg.perfs[[s]] <- lg.perf
 }
 
-# png(paste(savefolder, "/ROC-graph-noleg.png", sep = ""), width = 600 * plotfac,
-#     height = 300 * plotfac, res = 75 * plotfac)
+png(paste(savefolder, "/ROC-graph-noleg.png", sep = ""), width = 600 * plotfac,
+    height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 for (s in 1:2){
   TAR <- TARs[[s]]
@@ -472,12 +473,12 @@ for (s in 1:2){
   # where <- switch(s, 'bottomright', 'bottomright')
   # legend(where, col = (1:p)[-5][wi], ncol = 1, lwd = 2, legend = labels.roc[wi], lty = (1:(p-1))[wi])
 }
-# dev.off()
+dev.off()
 
 
 # figures for randomized graph
-folder <- "results/02-Nov-2022 15.31"
-# savefolder <- "Figures/anc+graph"
+folder <- "results/rand-graph1000"
+savefolder <- "Figures/rand-graph1000"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
 grepf <- function(str) grepl("+06", str)
@@ -563,8 +564,8 @@ pointfrac <- 0.8
 cx <- 0.75
 
 
-# png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
-#    height = 300 * plotfac, res = 75 * plotfac)
+png(paste(savefolder, "/z+ROC-noleg.png", sep = ""), width = 600 * plotfac,
+   height = 300 * plotfac, res = 75 * plotfac)
 par(mfrow = c(1,2))
 matplot(mean.z[, 1], mean.z[, -1], log ="xy", xlab = "n",
         ylab = "Average absolute z-statistics",
@@ -580,7 +581,7 @@ abline(h = sqrt(2 / pi), lty = 2, col =" grey")
 matplot((0:nsim)/nsim, TAR.p[,], type = "s", xlab = "Type I FWER", ylab ="Fraction of detected ancestors",
         col = (1:(lf + 1))[-5], las = 1)
 points(alpha.perf.p[1, ], alpha.perf.p[2, ], col = (1:(lf + 1))[-5], pch = 3)
-abline(v = alpha, lty = 2, col =" grey")
+lines(c(0.05, 0.05), c(0, 1), col = "gray", lty = 2)
 
 # legend('bottomright', col = (1:(lf + 1))[-5], ncol = 1, lwd = 2, legend = labels.roc[-lf], lty = (1:(lf + 1)))
-# dev.off()
+dev.off()
