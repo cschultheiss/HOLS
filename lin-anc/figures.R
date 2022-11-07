@@ -375,8 +375,8 @@ for (s in 1:2){
 dev.off()
 
 # figures for randomized graph
-folder <- "results/rand-graph1000"
-savefolder <- "Figures/rand-graph1000"
+folder <- "results/rand-graph-Gauss"
+savefolder <- "Figures/rand-graph-Gauss"
 flz <- list.files(folder)
 grepf <- function(str) grepl("+06", str)
 # flz <- flz[which(!sapply(flz, grepf))]
@@ -467,7 +467,7 @@ for (s in 1:2){
           col = (1:p)[-5], las = 1)
   points(diag(TAR[alpha.ind,1:lf]), diag(TAR[alpha.ind,lf + (1:lf)]),
          col = (1:p)[-5], pch = 3)
-  points(lg.perf, col = (1:p)[-5], pch = c(0:2, 5))
+  points(lg.perf, col = (1:p)[-5], pch = c(0:2, 5:6))
   lines(c(0.05, 0.05), c(0, 1), col = "gray", lty = 2)
   # wi <- switch(s, 1:2, 3:4)
   # where <- switch(s, 'bottomright', 'bottomright')
