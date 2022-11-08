@@ -76,6 +76,9 @@ resname <- paste0("setup ", format(Sys.time(), "%d-%b-%Y %H.%M"))
 if (save) save(setup, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
 seed.n <- 0
 
+fcts <- list(function(x) sign(x)*abs(x)^1.1, function(x) sign(x)*abs(x)^2, function(x) x^5, function(x) sin(x / sd(x)))
+nf <- length(fcts)
+
 for (n in n.vec) {
   print(n)
   seed.n <- seed.n + 1
@@ -86,8 +89,7 @@ for (n in n.vec) {
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc", "pcalg"), .options.snow = opts) %dorng%{
-                 
-
+              
                  psi <- cbind(rt(n, 7) / sqrt(1.4), runif(n, -sqrt(3), sqrt(3)), rt(n, 7) / sqrt(1.4),
                               rexp(n) * (2 * rbinom(n, 1, 0.5) - 1) / sqrt(2), rnorm(n),
                               runif(n, -sqrt(3), sqrt(3)), rnorm(n))
@@ -95,18 +97,25 @@ for (n in n.vec) {
                  
                  laa <- list()
                  lg <- list()
-                 st <- numeric(4)
+                 st <- numeric(2 * nf + 2)
                  for (l in 1:2) {
                    psi[, 6] <- psi[, 5 + l]
                    x <- psi[, pers[, gu]] %*% t(As[, , gu])
                    colnames(x) <- paste("x", 1:p, sep = "")
-                   st[l] <- system.time(laa[[l]] <- lin.anc.all(x, f = function(x) x^3))[3]
-                   st[2 + l] <- system.time(lg[[l]] <- lingam(x))[3]
+                   for (f in 1:nf){
+                     st[2 * (f - 1) + l] <- system.time(laa[[2 * (f - 1) + l]] <- lin.anc.all(x, f = fcts[[f]]))[3]
+                   }
+                   st[2 * nf + l] <- system.time(lg[[l]] <- lingam(x))[3]
                  }
                  
-                 outmat <- cbind(laa[[1]][[2]], laa[[2]][[2]], t(as(lg[[1]], "amat")), t(as(lg[[2]], "amat")))
+                 outmat <- laa[[1]][[2]]
+                 for (l in 2:(2 * nf)){
+                   outmat <- cbind(outmat, laa[[l]][[2]])
+                 }
+                 outmat <- cbind(outmat, t(as(lg[[1]], "amat")), t(as(lg[[2]], "amat")))
                  
-                 colnames(outmat) <- paste(rep(c("laa1", "laa2", "lg1", "lg2"), each = p), rep(colnames(x), 4), sep = ".")
+                 names(st) <- c(paste(rep(c("laa1", "laa2"), nf), rep(1:nf, each = 2), sep = ""), "lg1", "lg2")
+                 colnames(outmat) <- paste(rep(names(st), each = p), rep(colnames(x), 2 + 2 * nf), sep = ".")
 
 
      
@@ -118,12 +127,12 @@ for (n in n.vec) {
   } 
   toc()
   stopCluster(cl)
-  res.mat <- array(unlist(res[,"res"]), dim = c(p, 4 * p, nsim), dimnames = list(rownames(res[1,"res"][[1]]),
+  res.mat <- array(unlist(res[,"res"]), dim = c(p, (2 + 2 * nf) * p, nsim), dimnames = list(rownames(res[1,"res"][[1]]),
                    colnames(res[1,"res"][[1]]), NULL))
-  time.mat <- matrix(unlist(res[,"time"]), byrow = TRUE, nrow = nsim)
+  time.mat <- matrix(unlist(res[,"time"]), byrow = TRUE, nrow = nsim, dimnames = list(NULL, names(res[1,"time"][[1]])))
   ind <- unlist(res[,"gu"])
   names(ind) <- NULL
-  colnames(time.mat) <- c("laa1", "laa2", "lg1", "lg2")
+
 
   simulation <- list(res = res.mat, time = time.mat,
                      n = n, ind = ind,
@@ -134,7 +143,7 @@ for (n in n.vec) {
   As1 <- As2 <- array(NA, dim(As))
   As1[abs(As) > 1e-5] <- 1
   As2[abs(As) < 1e-5] <- 1
-  for (r in 0:3) {
+  for (r in 0:(2 * nf + 1)) {
     print(apply(res.mat[,(1:p) + (r * p), ] * As1[, , ind], 1:2, mean, na.rm = TRUE))
     print(apply(res.mat[,(1:p) + (r * p), ] * As2[, , ind], 1:2, mean, na.rm = TRUE))
   }
