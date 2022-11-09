@@ -21,6 +21,8 @@ save <- TRUE
 resname <- paste0("results ", format(Sys.time(), "%d-%b-%Y %H.%M"))
 # number of simulations
 nsim <- 200
+
+# update on simulation progress
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -52,6 +54,7 @@ beta[ind] <- 1
 samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
 
 RNGkind("L'Ecuyer-CMRG")
+# make it reproducible
 set.seed(42)
 
 tic()
@@ -82,7 +85,7 @@ res<-foreach(gu = 1:nsim, .combine = rbind,
                # low-dimensional HOLS check
                out$low.dim <- HOLS.check(x2, y, simulated.pval = TRUE, center = TRUE)
                
-               # find nodewise residuals first
+               # high-dimensional HOLS check: find nodewise residuals first
                lp <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, do.ZnZ = FALSE)
                # lazy version of high-dimensional HOLS without debiasing z^3
                out$high.dim <- HOLS.check(x, y, use.Lasso = TRUE, lasso.proj.out = lp)

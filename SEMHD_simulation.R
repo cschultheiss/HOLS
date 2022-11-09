@@ -24,8 +24,10 @@ if (save) {
   dir.create(paste("results/", newdir, sep="")) 
 }
 
-
+# number of simulations
 nsim <- 200
+
+# update on simulation progress
 progress <- function(n, tag) {
   mod <- 16
   if (n %% mod == 0 ) {
@@ -39,13 +41,18 @@ progress <- function(n, tag) {
 
 opts <- list(progress = progress)
 
+# sample.sizes
 n.vec <- c(1e2, 1e3)
+# correlation between x1 and x2; x2 and x3 etc
 rho <- 0.6
+# correlation between x0 and x1; x0 and x4 etc
 rho0 <- sqrt(0.1)
+# sample from mixture of Gaussian
 samp.mix <- function(n) rnorm(n) * sample(c(rep(sqrt(0.5), 2), sqrt(2)), n, TRUE)
 
 
 RNGkind("L'Ecuyer-CMRG")
+# make it reproducible
 set.seed(42)
 seed.vec <- sample(1:10000, length(n.vec))
 print(seed.vec) # 3588 3052 2252 5257 8307
@@ -53,18 +60,26 @@ seed.n <- 0
 
 for (n in n.vec) {
   seed.n <- seed.n + 1
+  # use different known seed for different n => can ommit lower sample size if wished
   set.seed(seed.vec[seed.n])
+  # total number of covariates
   p <- round(0.5 * n) * 3 + 1
+  # number of measured covariates high-dimensional
   phd <- p - 1
+  # number of measured covariates low-dimensiona
   pld <- 12
+  
+  # initiliaze parralelisation
   cl<-makeSOCKcluster(16) 
   registerDoSNOW(cl)
   tic()
   res<-foreach(gu = 1:nsim, .combine = rbind,
                .packages = c("MASS", "Matrix", "hdi", "glmnet", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
                  
+                 # independent noise terms
                  psi <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n)
                  
+                 # generate x from repetitve structure
                  x <- matrix(NA, nrow = n, ncol = p)
                  x[ ,1] <- psi[, 1]
                  for (j in seq(2, p - 2, 3)){
@@ -73,17 +88,21 @@ for (n in n.vec) {
                    x[ ,j + 2] <- rho * x[ , j + 1] + sqrt(1- rho^2) * psi[, j + 2]
                  }
                  
+                 # hide on variable
                  x.sub <- x[, -3]
+                 # output = hidden variable for simplicity
                  y <- x[, 3]
                  
                  out <- list()
                  
-                 # low-dimensional
+                 # low-dimensional HOLS check
                  out$low.dim <- HOLS.check(x.sub[, 1:pld], y, simulated.pval = FALSE)
                  
-                 # high-dimensional
+                 # high-dimensional HOLS check: find nodewise residuals first
                  lp <- lasso.proj(x.sub, y, standardize = FALSE, return.Z = TRUE, do.ZnZ = FALSE)
+                 # lazy version of high-dimensional HOLS without debiasing z^3
                  out$high.dim <- HOLS.check(x.sub, y, use.Lasso = TRUE, lasso.proj.out = lp)
+                 # full version of high-dimensional HOLS
                  out$high.dim.new <- HOLS.check(x.sub, y, use.Lasso = TRUE, lasso.proj.out = lp,
                                                 debias.z3 = TRUE, return.changed = TRUE, do.ZnZ = FALSE)
                  
@@ -92,6 +111,7 @@ for (n in n.vec) {
   toc()
   stopCluster(cl)
   
+  # store output list to matrix
   res.low <- matrix(unlist(res[, "low.dim"]), byrow = TRUE, nrow = nsim)
   colnames(res.low) <- c(rep("beta.OLS", pld), rep("beta.HOLS", pld),
                          rep("sd.scale", pld), "sigma.hat",
@@ -109,11 +129,17 @@ for (n in n.vec) {
                               rep("sd.scale", phd), "sigma.hat",
                               rep("pval", phd), rep("pval.corr", phd), "changed")
   
+  # store output quantities, sample size, random seed, commit
   simulation <- list(low.dim = res.low, high.dim = res.high, high.dim.new = res.high.new,
                      r.seed = attr(res, "rng"), "commit" = commit)
-  
+  # create unique filename based on sample size and time
   resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
+  # save the file to the folder
   if (save) save(simulation, file = paste("results/", newdir, "/", resname, ".RData", sep = ""))
   
+  # quick summary of simulation: with which fraction is global null rejected based on minimum p-value
+  # and, only for low-dimensional case, based on sum p-value;
+  # with which fraction are the local null hypotheses for the desired covariates rejected;
+  # and with which fraction for any other covariate
   print(simulation.summary(simulation, variables = c(2:3)))
 }
