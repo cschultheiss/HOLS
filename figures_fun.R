@@ -1,8 +1,26 @@
 require(latex2exp)
 
+# wrapper function to generate plots apart from the global null
 HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NULL, z.plot.ind.label = z.plot.ind, 
-                    conf.ind = NULL, all.ind = NULL, beta0 = NULL, beta.OLS = NULL, zlims.var = (0.1) * (1.1^(0:60)),
+                    conf.ind = NULL, beta0 = NULL, beta.OLS = NULL, zlims.var = (0.1) * (1.1^(0:60)),
                     colgroups = 1, which.line = NULL, ecdf.plot = TRUE, groups = NULL, group.labels = NULL, hd = FALSE){
+  # wrapper function to generate plots apart from the global null
+  # Input
+  # folder (string): location where the result files are stored
+  # exclude.chars (vector of strings): part of filenames to exclude, e.g., to large sample size
+  # z.plot (boolean): shall the plot bases on z-statistic be created
+  # z.plot.ind (integer vector): which z-statistics to look at
+  # z.plot.ind.label (integer vector): names for the z-statistics
+  # conf.ind (integer vector): where local null hypothesis should be rejected
+  # beta0 (numeric vector): true causal effect
+  # beta.OLS (numeric vector): least squares parameter
+  # zlims.var (numeric vector): values of z-statistic to compare with
+  # colgroups (integer): how often to use each colour in plot
+  # which.line (integer vector): which variables to emphasize with root-n growth
+  # ecdf.plot (boolean): shall the ecdf-plots be created
+  # groups (list of vectors): for which (groups of variables) is the ecdf plotted
+  # group.labels (vecotr of strings): label for these groups
+  # hd (boolean): is there a high-dimensional simulation to analyze
   flz <- list.files(folder)
   for (char in exclude.chars){
     grepf <- function(str) grepl(char, str)
@@ -31,7 +49,7 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
     ord <- matrix(1:pp, nrow = 2, ncol = ceiling(pp / 2), byrow = T)
     
     nsim <- nrow(simulation$low.dim)
-    unconf.ind <- all.ind[-conf.ind]
+    unconf.ind <- (1:p)[-conf.ind]
     dbeta <- beta0 - beta.OLS
     max.unconf <- matrix(NA, nsim, length(flz))
     min.conf <- matrix(NA, nsim, length(flz)) 
