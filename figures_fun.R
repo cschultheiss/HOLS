@@ -21,79 +21,100 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
   # groups (list of vectors): for which (groups of variables) is the ecdf plotted
   # group.labels (vecotr of strings): label for these groups
   # hd (boolean): is there a high-dimensional simulation to analyze
+  
+  # all files in the given folder
   flz <- list.files(folder)
+  # potentially omit some files, e.g., ignore too large sample sizes
   for (char in exclude.chars){
     grepf <- function(str) grepl(char, str)
     flz <- flz[which(!sapply(flz, grepf))]
   }
+  # number of files that are still considered
   nn <- length(flz)
   
   if(z.plot){
     j <- 0
     for (file in flz) {
       j <- j + 1
+      # load the file
       load(paste(folder, "/", file, sep = ""))
       if (j == 1) {
+        # number of measured covariates
         p <- sum(colnames(simulation$low.dim) == "beta.OLS")
         zs <- matrix(NA, length(flz), p + 1)
       }
       zs[j, 1] <- simulation$n
+      # average absolut z-statistic for each measured covariate
       zs[j, -1] <- apply(abs(simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.HOLS")] - 
                                simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
                            simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
                            simulation$low.dim[,"sigma.hat"], 2, mean)
     }
     
+    # number of variables in z-statistic plot
     pp <- length(z.plot.ind)
     labels <- eval(parse(text = paste("c(", paste("TeX('$X_{", z.plot.ind.label, "}$')", sep = "", collapse = ","), ")")))
     ord <- matrix(1:pp, nrow = 2, ncol = ceiling(pp / 2), byrow = T)
     
+    # number of simulations
     nsim <- nrow(simulation$low.dim)
+    # covariates not confounded with the targed
     unconf.ind <- (1:p)[-conf.ind]
+    # confounding bias on to the least squares parameter
     dbeta <- beta0 - beta.OLS
+    # maximum absolut z-statistic of variables where H0 shall not be rejected
     max.unconf <- matrix(NA, nsim, length(flz))
+    # minimum absolut z-statistic of variables where H0 shall be rejected
     min.conf <- matrix(NA, nsim, length(flz)) 
-    max.unconfc <- matrix(NA, nsim, length(flz))
-    min.confc <- matrix(NA, nsim, length(flz)) 
+    # fraction of simulation runs with perfect recovery of U for different z tresholds
     true.model.var <- matrix(NA, length(zlims.var), length(flz))
-    true.model.varc <- matrix(NA, length(zlims.var), length(flz))
-    U.sub.var <- matrix(NA, length(zlims.var), length(flz))
+    # l1-difference between causal effect and OLS parameter for detected variables
     diff.var <- matrix(NA, length(zlims.var), length(flz))
-    diff.U <- numeric(length(flz))
+    # size of intersection between U and its estimate
     size.var <- matrix(NA, length(zlims.var), length(flz))
+    # size of intersection between U and its estimate
     U.size <- matrix(NA, nsim + 1, length(flz))
     j <- 0
     for (file in flz) {
+      # which sample size to look at
       j <- j + 1
+      # load file
       load(paste(folder, "/", file, sep = ""))
+      # z-statistic for each covariate and simulation run
       all.z <- abs(simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.HOLS")] - 
                      simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]) / 
         simulation$low.dim[,which(colnames(simulation$low.dim) == "sd.scale")] / 
         simulation$low.dim[,"sigma.hat"]
-      all.OLS <- simulation$low.dim[,which(colnames(simulation$low.dim) == "beta.OLS")]
-      all.diff <- t(t(all.OLS) - beta0)
-      diff.U[j] <- mean(all.diff[,unconf.ind]^2)
       k <- 0
       for (lim in zlims.var){
+        # which treshold to look at
         k <- k + 1
+        # which local null hypothesis are not rejected at each treshold
         which.selected <- apply(all.z < lim, 1, which)
         if(is.matrix(which.selected)) which.selected <- split(which.selected, rep(1:ncol(which.selected), each = nrow(which.selected)))
+        # l1-difference between causal and OLS parameter for given estimate of U
         diff.var[k, j] <- mean(sapply(which.selected, function(ws) sum(abs(dbeta[ws]))))
+        # size of intersection between U and its estimate
         size.var[k ,j] <- mean(sapply(which.selected, function(ws) sum(unconf.ind %in% ws)))
       }
+      # minimum absolut z-statistic of variables where H0 shall be rejected
       min.conf[, j] <- apply(all.z[, conf.ind], 1, min)
+      # maximum absolut z-statistic of variables where H0 shall not be rejected
       max.unconf[, j] <- apply(all.z[, unconf.ind], 1, max)
+      # if the maximum over the unconfounded is lower than the z threshold
+      # and the minimum over the confounded is larger than the z threshold, the true U is found
       true.model.var[, j] <- sapply(zlims.var, function(x) mean((x > max.unconf[,j]) & (x < min.conf[,j])))
-      U.sub.var[, j] <- sapply(zlims.var, function(x) mean((x < min.conf[,j]))) 
       
       k <- 0
-      z.min <- apply(all.z[,conf.ind], 1, min)
-      for (thresh in c(sort(z.min), Inf)){
+      # compare with minimal z values, this is where probability of U_hat being a subset changes
+      for (thresh in c(sort(min.conf[, j]), Inf)){
         k <- k + 1
+        # average size of unconfounded variables for which H0 is not rejected at given sample size
         U.size[k, j] <- mean(apply(all.z[,unconf.ind] <= thresh - 1e-6, 1, sum))
       }
     }
     
+    # define labels based on used sample sizes
     labels.rec <- eval(parse(text = paste("c(", paste("TeX('$n=10^", log10(zs[,1]), "$')", sep = "", collapse = ","), ")")))
     n.col <- ceiling(pp / colgroups)
     par(mfrow = c(1,2))
@@ -102,7 +123,7 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
             ylab = "Average absolute z-statistics",
             pch = 1:pp, col = rep((1:(n.col + 1))[-5], colgroups), lwd = 2)
     legend("topleft", inset = c(0, -0.15), ncol = ceiling(pp / 2), legend = labels[ord][1:pp],
-           pch = (1:pp)[ord], col = rep((1:(n.col + 1))[-5], colgroups), pt.lwd = 2)
+           pch = (1:pp)[ord], col = rep((1:(n.col + 1))[-5], each = colgroups), pt.lwd = 2)
     par(xpd = FALSE)
     for (j in which.line){
       lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
