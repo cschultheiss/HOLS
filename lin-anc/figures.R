@@ -477,8 +477,8 @@ dev.off()
 
 
 # figures for randomized graph
-folder <- "results/rand-graph1000"
-savefolder <- "Figures/rand-graph1000"
+folder <- "results/rand-graph-Gauss"
+savefolder <- "Figures/rand-graph-Gauss"
 flz <- list.files(folder)
 load(paste(folder, "/", flz[1], sep = ""))
 grepf <- function(str) grepl("+06", str)
@@ -526,7 +526,18 @@ Bs2j <- t(Bs2[j, ,])[, -j]
 TAR.p <- matrix(NA, dim(simulation$res)[3] + 1, lf)
 mean.z <- matrix(NA, lf, 5)
 
-
+nd <- rep(0, nsim)
+for (i in 1:nsim){
+  gs <- which(setup$pers[,i] %in% c(5,6)) # variables with Gaussian error Term
+  ch <- which(!is.na(Bs1[,gs[1], i]))  # children of the first Gaussian variable
+  chng <- ch[-which(ch == gs[2])] # children except the Gaussian
+  des <- which(!is.na(As1[,gs[1], i])) # all descendants of the first Gaussian variable
+  for (de in des){
+    an <- which(!is.na(As1[de, , i])) # ancestors of each descendant
+    # if non of the non-Gaussian children is a descendant, the path is undetectable
+    nd[i] <- nd[i] + 1 * (sum(chng %in% c(de, an)) == 0)
+  }
+}
 
 alpha.perf.p <- matrix(NA, 2, lf)
 i <- 0
