@@ -1,7 +1,7 @@
 require(hdi)
 require(MASS)
 
-source('debias_z3.R')
+source('debias_z3.R', local = TRUE)
 
 HOLS.check <- function(x, y, use.Lasso = FALSE, simulated.pval = FALSE, center = TRUE,
                        standardize = FALSE, multiplecorr.method = "sim", nsim = 10000, lasso.proj.out = NULL,
