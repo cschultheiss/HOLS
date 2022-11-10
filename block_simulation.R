@@ -1,5 +1,5 @@
 block_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
-  # when called executes the simulation for Section 4.2
+  # when called executes the simulation for Section A.4
   # Input
   # nsim (integer): number of simulation runs per sample size
   # n.vec (integer vector): sample sizes to be considered
