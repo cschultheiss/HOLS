@@ -63,7 +63,7 @@ block_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
     registerDoSNOW(cl)
     tic()
     res<-foreach(gu = 1:nsim, .combine = rbind,
-                 .packages = c("MASS", "Matrix", "hdi", "tictoc"), .options.snow = opts) %dorng%{
+                 .packages = c("MASS"), .options.snow = opts) %dorng%{
                    
                    # bootstrap indices for first block
                    ind.1 <- sample(1:nb, n, TRUE)

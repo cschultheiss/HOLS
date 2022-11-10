@@ -63,7 +63,7 @@ SEM_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
     registerDoSNOW(cl)
     tic()
     res<-foreach(gu = 1:nsim, .combine = rbind,
-                 .packages = c("MASS", "Matrix", "hdi", "tictoc"), .options.snow = opts) %dorng%{
+                 .packages = c("MASS"), .options.snow = opts) %dorng%{
                    
                    # simulate covariates according to linear SEM
                    x1 <- rt(n, df = 7) / sqrt(1.4)
