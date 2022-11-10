@@ -201,26 +201,43 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
 }
 
 H0_plot <- function(file) {
-  load(file)
-  pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
-  pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")]
-  pval.corr <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.corr")]
-  pval.corrh <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval.corr")]
-  pval.corr.min <- apply(pval.corr, 1, min)
-  pval.corr.minh <- apply(pval.corrh, 1, min)
-  pval.corr.min
+  # wrapper function to generate plots for the global null
+  # Input
+  # file (string): file location where the results are stored
   
+  # load the results
+  load(file)
+  # p-values for low-dimensional HOLS
+  pval <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval")]
+  # p-values for high-dimensional HOLS
+  pval.h <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval")]
+  # multiplicity corrected p-values for low-dimensional HOLS
+  pval.corr <- simulation$low.dim[,which(colnames(simulation$low.dim) == "pval.corr")]
+  # multiplicity corrected p-values for high-dimensional HOLS
+  pval.corrh <- simulation$high.dim.new[,which(colnames(simulation$high.dim.new) == "pval.corr")]
+  # minimum corrected p-value per simulation run for low-dimensional HOLS
+  pval.corr.min <- apply(pval.corr, 1, min)
+  # minimum corrected p-value per simulation run for high-dimensional HOLS
+  pval.corr.minh <- apply(pval.corrh, 1, min)
+  
+  # dimensionalities
   pl <- ncol(pval)
   ph <- ncol(pval.h)
   
+  # quantiles to look at for manually creating plots of ecdf
   qs <- seq(0, 1, 0.01)
   par(mfrow = c(1, 2))
+  # plot ecdf of all p-values for low-dimensional HOLS
   plot(qs, ecdf(pval)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
        xlab = "p", ylab ="Fn(p)", main = TeX(paste("ECDF of p-values for $p=", pl, "$", sep = "")))
+  # add the ecdf of the minimum corrected p-value for low-dimensional HOLS
   lines(qs, ecdf(pval.corr.min)(qs), col = 2, lwd = 2, lty = 2)
   legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
+  
+  # plot ecdf of all p-values for high-dimensional HOLS
   plot(qs, ecdf(pval.h)(qs), col = 1, xlim = c(0,1), type = "l", lwd = 2, lty = 1,
        xlab = "p", ylab ="Fn(p)", main = TeX(paste("ECDF of p-values for $p=", ph, "$", sep = "")))
+  # add the ecdf of the minimum corrected p-value for high-dimensional HOLS
   lines(qs, ecdf(pval.corr.minh)(qs), col = 2, lwd = 2, lty = 2)
   legend('bottomright', col = 1:2, lwd = 2, legend = c(TeX("$p_j$ $\\forall j"), TeX("min $P_j$")), lty = 1:2)
 }
