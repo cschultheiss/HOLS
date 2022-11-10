@@ -7,12 +7,13 @@ folder <- "Protein-signal"
 flz <- list.files(folder)
 flz2 <- character(0)
 for (i in 1:length(flz)){
-  # get all file corresponding to an environment
+  # get all file corresponding to an environment those start with a number
   if (!is.na(as.numeric(substr(flz[i], 1 ,1)))) flz2 <- c(flz2, flz[i])
 }
+
 all.env <- numeric(0)
 for(file in flz2){
-  # read environment number from file
+  # read environment number from file this comes before the first "."
   all.env <- c(all.env, as.numeric(gsub( " .*.", "", file )))
 }
 # sort files by environment
@@ -35,6 +36,7 @@ for (file in flz2){
 # use a different column name that R can handle
 colnames(dat)[which(colnames(dat) == "p44/42")] <- "p44_42"
 
+# the last column is the environment, the rest are variables
 vars <- colnames(dat)[-12]
 parents <- matrix(FALSE, length(vars), length(vars))
 rownames(parents) <- colnames(parents) <- vars
@@ -53,7 +55,7 @@ parents["pjnk", c("pkc", "pka")] <- TRUE
 # use 8 environments following previous projects
 envs <- (1:9)[-2]
 
-# using consensus network
+# log-transform the data
 log <- TRUE
 # store everything in a list over environments
 all.analysis <- list()
@@ -82,7 +84,6 @@ for (env in envs){
   pval.lm.filtered[pval.HOLS < 0.05] <- NA
   all.analysis[[env]]$pval.lm <- pval.lm
   all.analysis[[env]]$pval.HOLS <- pval.HOLS
-  all.analysis[[env]]$pval.lm <- pval.lm
   all.analysis[[env]]$pval.lm.filtered <- pval.lm.filtered
 }
 
@@ -90,14 +91,18 @@ for (env in envs){
 pas <- paste("all.analysis[[", envs, "]]$pval.lm.filtered", collapse = ", ", sep = "")
 pval.min <- eval(parse(text = paste("pmin(", pas, ", na.rm = TRUE)", sep="")))
 
+# total number of significance tests
+ntests <- length(envs) * sum(parents)
+
 # count number of environments passing HOLS
 sums <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm.filtered))", sep = "", collapse = " + ")))
 # count number of envrionments passing HOLS and significant in linear model
-sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm.filtered) & all.analysis[[", envs, "]]$pval.lm.filtered < 0.05 / 136 )", sep = "", collapse = " + ")))
+sums.filtered <- eval(parse(text = paste("1*(!is.na(all.analysis[[", envs, "]]$pval.lm.filtered) & all.analysis[[", envs, "]]$pval.lm.filtered < 0.05 / ntests )", sep = "", collapse = " + ")))
 # store to vectors
 pvals.reported <- pval.min[!is.na(pval.min)]
 sums.reported <- sums[sums > 0]
 sums.filtered.reported <- sums.filtered[sums > 0]
+# get variable names of edges to be considered
 ma <- map(which(!is.na(pval.min), arr.ind = TRUE))
 # order by p-value
 ord <- order(pvals.reported)
