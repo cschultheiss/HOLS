@@ -4,16 +4,10 @@ SEM_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
   # nsim (integer): number of simulation runs per sample size
   # n.vec (integer vector): sample sizes to be considered
   # Output (string): save location of the results folder
-  require(MASS)
-  require(hdi)
-  require(Matrix)
   require(tictoc)
   require(doRNG)
   require(doSNOW)
-  require(parallel)
-  require(MultiRNG)
   require(git2r)
-  require(expm)
   
   source('HOLS_procedure.R', local = TRUE)
   source('simulation_analysis.R', local = TRUE)
@@ -69,7 +63,7 @@ SEM_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
     registerDoSNOW(cl)
     tic()
     res<-foreach(gu = 1:nsim, .combine = rbind,
-                 .packages = c("MASS", "Matrix", "hdi", "MultiRNG", "tictoc"), .options.snow = opts) %dorng%{
+                 .packages = c("MASS", "Matrix", "hdi", "tictoc"), .options.snow = opts) %dorng%{
                    
                    # simulate covariates according to linear SEM
                    x1 <- rt(n, df = 7) / sqrt(1.4)
