@@ -40,7 +40,7 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
       if (j == 1) {
         # number of measured covariates
         p <- sum(colnames(simulation$low.dim) == "beta.OLS")
-        zs <- matrix(NA, length(flz), p + 1)
+        zs <- matrix(NA, nn, p + 1)
       }
       zs[j, 1] <- simulation$n
       # average absolut z-statistic for each measured covariate
@@ -120,15 +120,16 @@ HA_plot <- function(folder, exclude.chars = NULL, z.plot = TRUE, z.plot.ind = NU
     par(mfrow = c(1,2))
     par(xpd = TRUE)
     # plot of z-statistics
-    matplot(zs[, 1], zs[, z.plot.ind + 1], log ="xy", xlab = "n",
-            ylab = "Average absolute z-statistics",
+    matplot(matrix(zs[,1], nrow = nn), matrix(zs[, z.plot.ind + 1], nrow = nn),
+            log ="xy", xlab = "n", ylab = "Average absolute z-statistics",
             pch = 1:pp, col = rep((1:(n.col + 1))[-5], colgroups), lwd = 2)
     legend("topleft", inset = c(0, -0.15), ncol = ceiling(pp / 2), legend = labels[ord][1:pp],
            pch = (1:pp)[ord], col = rep((1:(n.col + 1))[-5], each = colgroups), pt.lwd = 2)
     par(xpd = FALSE)
     # add root-n growth for defined variables
     for (j in which.line){
-      lines(zs[, 1], sqrt(zs[, 1]) * zs[4, j + 1] / sqrt(zs[4, 1]), lty = 2)
+      # only if at least two sample sizes are tested
+      if (nn > 1) lines(zs[, 1], sqrt(zs[, 1]) * zs[nn - 1, j + 1] / sqrt(zs[nn - 1, 1]), lty = 2)
     }
     # plot recovery of perfect set U
     matplot(zlims.var, true.model.var, lty = 1:nn, type = "l", log = "x",
