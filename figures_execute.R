@@ -21,3 +21,7 @@ HA_plot("results/block independent", z.plot.ind = c(1, 7, 9, 13, 14, 20, 22, 26)
                                          rep(0, 13)), zlims.var = (0.1) * (1.1^(0:60)), which.line = c(1, 7, 9, 13), colgroups = 2,
         groups = list(1, 9, 14:26), group.labels = c("1", "9", "U"))
 
+
+# create the Table 1 in LaTeX format
+source('cyto/cyto_table.R')
+cyto_table()
