@@ -117,7 +117,8 @@ mixgauss_simulation <- function(nsim = 200, n = 100, p = 200, p2 = 30){
   # quick summary of simulation: with which fraction is global null rejected based on minimum p-value
   # and, only for low-dimensional case, based on sum p-value and based on simulated p-values;
   print(simulation.summary(simulation))
-  
+  cat(paste("The simulation ouput for sample size ", n, " was stored to results/", resname, ".RData", sep = ""),
+      "\n \n")
   return(paste("results/", resname, ".RData", sep = ""))
 }
 
