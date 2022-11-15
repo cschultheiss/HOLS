@@ -11,7 +11,7 @@ HA_plot("results/SEM missing x3", exclude.chars = "+07", z.plot.ind = 1:6, z.plo
 H0_plot("results/mix-Gauss null.RData")
 
 # creates Figures 9, 8
-HA_plot("results/SEM HD", exclude.chars = "+07", z.plot = FALSE, groups = list(2, 3, -c(2,3)),
+HA_plot("results/SEM HD", z.plot = FALSE, groups = list(2, 3, -c(2,3)),
         group.labels = c("3", "4", "U"), hd = TRUE)
 
 # creates Figures 10, 12, 11
