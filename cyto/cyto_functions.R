@@ -1,4 +1,4 @@
-source('~/Documents/ETH/PhD/HOLS/HOLS_procedure.R')
+source('HOLS_procedure.R', local = TRUE)
 
 cyto.HOLS <- function(predictor, response, env, log = TRUE){
   # function to apply the HOLS check on the cytometric data
