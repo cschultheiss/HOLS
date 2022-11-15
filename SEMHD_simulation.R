@@ -132,6 +132,8 @@ SEMHD_simulation <- function (nsim = 200, n.vec = c(10^2, 10^3)){
     # with which fraction are the local null hypotheses for the desired covariates rejected;
     # and with which fraction for any other covariate
     print(simulation.summary(simulation, variables = c(2:3)))
+    cat(paste("The simulation ouput for sample size ", n, " was stored to results/", newdir, "/", resname, ".RData", sep = ""),
+        "\n \n")
   }
   return(paste("results/", newdir, sep = ""))
 }

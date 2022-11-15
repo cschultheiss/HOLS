@@ -113,6 +113,8 @@ block_simulation <- function(nsim = 200, n.vec = c(1e2, 1e3, 1e4, 1e5, 1e6)){
     # with which fraction are the local null hypotheses for the desired covariates rejected;
     # and with which fraction for any other covariate
     print(simulation.summary(simulation, variables = c(1 : 13)))
+    cat(paste("The simulation ouput for sample size ", n, " was stored to results/", newdir, "/", resname, ".RData", sep = ""),
+        "\n \n")
   }
   return(paste("results/", newdir, sep = ""))
 }
