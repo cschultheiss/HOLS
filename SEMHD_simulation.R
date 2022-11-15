@@ -121,7 +121,7 @@ SEMHD_simulation <- function (nsim = 200, n.vec = c(10^2, 10^3)){
     
     # store output quantities, sample size, random seed, commit
     simulation <- list(low.dim = res.low, high.dim = res.high, high.dim.new = res.high.new,
-                       r.seed = attr(res, "rng"), "commit" = commit)
+                       n = n, r.seed = attr(res, "rng"), "commit" = commit)
     # create unique filename based on sample size and time
     resname <- paste0("results n=", n, " ", format(Sys.time(), "%d-%b-%Y %H.%M"))
     # save the file to the folder
