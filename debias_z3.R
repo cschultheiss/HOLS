@@ -1,3 +1,4 @@
+require(glmnet)
 lasso.proj.z3tilde <- function (x, z3, standardize = TRUE,
           parallel = FALSE, ncores = getOption("mc.cores", 2L), verbose = FALSE,
           do.ZnZ = FALSE) 
