@@ -15,4 +15,4 @@ The files must be stored in a subfolder called Protein-signal <br>
 Helper functions with explaining comments are stored in cyto/cyto_functions.R <br>
 
 The file figures_execute.R contains a complete workflow to obtain each figure and the table <br>
-The called plotting functions with explaining comments are stored in figures.fun.R
+The called plotting functions with explaining comments are stored in figures_fun.R
